@@ -6,12 +6,9 @@ import {
   todayISO, addDays, eachDate, dayWd, calculatePhotoNeeded, isBusyPeriod, isHoliday, countableIdSet,
   careOnDate, runOnDate,
 } from "./schedule.js";
+import { esc } from "./esc.js";
 
 const SPAN = 7;            // 本日から1週間
-
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-}
 
 function shortDate(iso) {
   const { day, wd } = dayWd(iso);

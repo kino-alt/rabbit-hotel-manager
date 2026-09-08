@@ -6,14 +6,24 @@
   --line: #D3D1C7;
   --text: #2C2C2A;
   --sub: #5F5E5A;
-  --muted: #888780;
+  --muted: #6C6B65;   /* 本文背景に対し 4.5:1 以上（WCAG AA） */
   --accent: #1D9E75;
   --accent-dark: #0F6E56;
   --done-bg: #E1F5EE;
   --done-text: #085041;
   --warn: #854F0B;
   --danger: #E24B4A;
+  /* 一覧のセル背景（凡例の色見本と共通の単一定義） */
+  --stay: #EEF6F1;          /* 宿泊中 */
+  --stay-holiday: #DCEDE4;  /* 宿泊中の定休日 */
+  --holiday: #F1DADA;       /* 定休日 */
 }
+
+/* 凡例の色見本（main.html / history.html）。HTML に色を直書きしない */
+.sw { display: inline-block; padding: 0 5px; border-radius: 3px; }
+.sw.stay { background: var(--stay); }
+.sw.stay-holiday { background: var(--stay-holiday); }
+.sw.holiday { background: var(--holiday); }
 
 * { box-sizing: border-box; }
 
@@ -418,10 +428,10 @@ table.overview td.rabbit-name { text-align: left; position: sticky; left: 0; z-i
 .overview.compact th.dcol .wd { display: block; font-size: 9px; font-weight: normal; color: var(--sub); }
 .overview.compact td.dcol { font-size: 13px; line-height: 1.1; }
 /* 定休日の赤は日付ヘッダーのみ */
-.overview.compact th.col-holiday { background: #F1DADA; }
+.overview.compact th.col-holiday { background: var(--holiday); }
 /* 宿泊期間、宿泊中の定休日はその色を少し濃く（全体一覧のみ付与） */
-.overview.compact td.in-stay { background: #EEF6F1; }
-.overview.compact td.in-stay.col-holiday { background: #DCEDE4; }
+.overview.compact td.in-stay { background: var(--stay); }
+.overview.compact td.in-stay.col-holiday { background: var(--stay-holiday); }
 .overview.compact th.today { font-weight: bold; }
 
 /* 全体一覧・過去の記録は日付列の幅を完全にそろえる（編集操作が無いため） */
