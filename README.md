@@ -1,13 +1,13 @@
 # うさぎホテル業務管理アプリ
 
-`documents/` の設計資料に基づく実装です。Firebase(Sparkプラン)+ Hosting + Firestore + 匿名認証で動きます。
+`documents/` の設計資料に基づく実装です。Firebase(Sparkプラン)+ Hosting + Firestore + メール/パスワード認証で動きます。
 
 ## ファイル構成
 
 ```
 public/                 … Hosting で配信するファイル
   index.html            … login.html へリダイレクト
-  login.html / login.js … ログイン(共通パスワード入力)
+  login.html / login.js … ログイン(パスワード入力。内部はスタッフ共有アカウントでメール/パスワード認証)
   main.html / main.js    … 全体一覧をメイン表示。左上「☰」でメニュー(ケア/ラン/過去の記録/設定)。
                             一覧の右上「＋」でうさぎ登録へ。店舗切替つき
   care.html / care.js    … ケア担当画面
@@ -23,8 +23,8 @@ public/                 … Hosting で配信するファイル
   setup.html / setup.js       … 初期セットアップ(初回のみ・パスワード等)
   seed-stores.html / seed-stores.js … 店舗(store_1 本店 / store_2 豊中店)の初期登録(初回のみ)
 
-  firebase-config.js … Firebase接続設定(★要編集)
-  auth.js            … 共通ロジック層:パスワード照合 + 匿名ログイン
+  firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集)
+  auth.js            … 共通ロジック層:スタッフ共有アカウントのログイン + 設定パスワード照合
   schedule.js        … 共通ロジック層:日付計算
   dailyRecord.js     … 共通ロジック層:当日記録の生成・更新
   db.js              … データアクセス層:Firestoreの読み書き
@@ -38,9 +38,12 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
 ## セットアップ手順
 
 1. [Firebase コンソール](https://console.firebase.google.com/) でプロジェクトを作成(Sparkプランのまま)。
-2. **Authentication** →「ログイン方法」→ **匿名** を有効化。
+2. **Authentication** →「ログイン方法」→ **メール/パスワード** を有効化（匿名は使わない）。
+   続いて **Users** →「ユーザーを追加」で**スタッフ共有アカウントを1つ**作成する
+   （例：`staff@あなたのドメイン`。パスワードがスタッフ全員のログインパスワードになる）。
 3. **Firestore Database** を作成(本番モード)。
 4. ウェブアプリを追加し、表示された設定値を `public/firebase-config.js` の `firebaseConfig` に貼り付け。
+   同ファイルの **`STAFF_EMAIL`** を手順2で作ったアドレスに変更。
    `.firebaserc` の `TODO_PROJECT_ID` も実際のプロジェクトIDに変更。
 5. Firebase CLI を導入して初回デプロイ:
    ```
@@ -48,10 +51,10 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
    firebase login
    firebase deploy --only firestore:rules,hosting
    ```
-6. デプロイした URL の `/setup.html` を開き、共通パスワード・設定パスワード・ケア項目・定休日を登録。
-   (パスワードは全店舗共通。共通パスワードは全員のログイン用、設定パスワードは設定画面を開くとき用。
-    ケア項目・定休日は次の手順で店舗ごとに上書きされます)
-7. `/seed-stores.html` を開いて「店舗を登録する」を実行。
+6. デプロイした URL の `/login.html` を手順2のパスワードでログイン → そのまま `/setup.html` を開き、
+   設定パスワード（設定画面用）・ケア項目・定休日を登録。
+   (ケア項目・定休日は次の手順で店舗ごとに上書きされます)
+7. ログインしたまま `/seed-stores.html` を開いて「店舗を登録する」を実行。
    `stores/store_1`(本店・定休日 火木)と `stores/store_2`(豊中店・定休日 水木)が作成されます。
    ケア項目マスタは実行時点の `stores/main` と同じ内容がコピーされます(無ければ既定の4項目)。
    同時に TTL 設定用の仮うさぎ(`expireAt` 付き)が各店舗へ1件ずつ入ります。
@@ -63,8 +66,32 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
 9. `/login.html` からログイン。`main.html`(担当選択)の上部で本店／豊中店を切り替えられます
    (選択は端末ごとに `localStorage` に保存され、切替時にページが再読み込みされて全画面へ反映されます)。
 
-以降のパスワード変更は Firestore コンソールで `config/common` を直接編集してください
-(セキュリティルールでクライアントからの更新を禁止しているため)。
+以降の変更方法:
+- **スタッフのログインパスワード** … Firebase コンソール → Authentication → Users → 該当アカウント → パスワードを再設定。
+- **設定パスワード（managerPassword）** … Firestore コンソールで `config/common` を直接編集
+  (セキュリティルールでクライアントからの更新を禁止しているため)。
+
+## セキュリティ
+
+- **認証**：スタッフは Firebase Authentication の**共有アカウント1つ**（メール/パスワード）でログインする。
+  `login.html` はパスワードだけを入力し、内部で `STAFF_EMAIL` 固定でサインインする。
+  Firestore ルールは「メール/パスワードでログイン済みか」(`sign_in_provider == 'password'`) だけを見る。
+  → デプロイURLを知っているだけでは読み書きできない（以前の匿名認証では誰でも通っていた）。
+- **設定パスワード**：`config/common.managerPassword`。ログイン済みスタッフのみ読める。
+  設定画面(`admin.html`)を開くときの2段階目の確認に使う（クライアント側で照合）。
+- **App Check（推奨・任意）**：正規のWebアプリからのアクセスかをreCAPTCHA v3で検証し、
+  盗まれた設定値やスクリプトからの直接アクセスを弾く。設定手順：
+  1. Firebase コンソール → **App Check** → アプリを登録 → **reCAPTCHA v3** を選択。
+     表示された**サイトキー**を `public/firebase-config.js` の `RECAPTCHA_SITE_KEY` に貼る。
+  2. デプロイして `login.html` を開き、コンソールの App Check 画面で**リクエストが検証済みとして届く**ことを確認。
+     ローカル(`firebase serve`)で試す場合は、コンソールで表示されるデバッグトークンを登録する
+     （`self.FIREBASE_APPCHECK_DEBUG_TOKEN = true` を DevTools で一時設定 → 出力トークンを登録）。
+  3. 検証済みリクエストが十分に届いていることを確認してから、
+     App Check → **Firestore** の「適用」を**有効化**する（有効化前は未検証でも通る）。
+  - `RECAPTCHA_SITE_KEY` が空文字の間は App Check は初期化されない（未設定でもアプリは動く）。
+- **残るリスク**：スタッフ共有アカウントのパスワードを知る人は全データを読み書きできる。
+  「誰がいつ変えたか」の監査ログはない。個人ごとの権限分離が必要になったら
+  スタッフ個別アカウント＋manager カスタムクレームへ移行する（評価メモ #3 の案2）。
 
 ## Firestore データ構造
 
@@ -72,7 +99,7 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
 
 ```
 config/common
-  { commonPassword, managerPassword }
+  { managerPassword }          (設定画面の入口。スタッフのログインは Firebase Auth 側)
 
 stores/{storeId}                     (storeId は firebase-config.js の STORES。store_1=本店 / store_2=豊中店)
   name: "本店" | "豊中店"              (表示用の店舗名)

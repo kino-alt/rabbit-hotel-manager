@@ -1,9 +1,13 @@
 // Firebaseへの接続設定（共通ファイル）
 //
 // ↓ Firebaseコンソール →「プロジェクトの設定」→「マイアプリ（ウェブ）」で取得した値に置き換えてください。
-// この情報はブラウザに公開されても問題ありません（不正アクセスはセキュリティルールと匿名認証で防ぎます）。
+// firebaseConfig 自体はブラウザに公開されても問題ありません。実際のアクセス制御は
+// セキュリティルール（本物のメール/パスワードでログイン済みか）と App Check で行います。
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  initializeAppCheck, ReCaptchaV3Provider,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
@@ -19,6 +23,17 @@ const firebaseConfig = {
   appId: "1:44112581380:web:9e49fe5eb42496a37a7651",
   measurementId: "G-FGMER1CDGG"
 };
+
+// スタッフ共有アカウント。Firebase Authentication（メール/パスワード）に
+// 1つだけ作成したアカウントのメールアドレスをここに書く。
+// スタッフは login 画面ではパスワードだけを入力し、内部でこのアドレス固定でログインする。
+// ★ 実際に作成したアドレスに置き換えてください（詳細は README「セキュリティ」節）。
+export const STAFF_EMAIL = "staff@rabbit-hotel-manager.example";
+
+// App Check（reCAPTCHA v3）のサイトキー。
+// 空文字なら App Check は初期化しない（未設定でも動く）。
+// 設定手順は README「セキュリティ」節を参照。
+const RECAPTCHA_SITE_KEY = "";
 
 // 店舗一覧（Firestore の stores/{id} と対応）。
 // 店舗を増やすときはこの配列に追加し、seed-stores.html で初期値を書き込む。
@@ -51,6 +66,20 @@ export function currentStoreName() {
 }
 
 export const app = initializeApp(firebaseConfig);
+
+// App Check：初期化は initializeApp の直後、他のサービス利用より前に行う。
+// サイトキー未設定なら何もしない（enforcement をコンソールで有効にする前でも動く）。
+if (RECAPTCHA_SITE_KEY) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (e) {
+    console.warn("App Check を初期化できませんでした", e);
+  }
+}
+
 export const auth = getAuth(app);
 
 // オフライン永続化つきで Firestore を初期化する。

@@ -5,7 +5,7 @@
 //
 // setup.html と同じく Firebase プロジェクト構築後に手動で1回開くページ。
 
-import { signInAnonymously } from "./auth.js";
+import { requireLogin } from "./auth.js";
 import * as db from "./db.js";
 
 const form = document.getElementById("seed-form");
@@ -22,14 +22,12 @@ const TARGETS = [
 function info(t) { message.className = "msg info"; message.style.whiteSpace = "pre-line"; message.textContent = t; }
 function fail(t) { message.className = "msg error"; message.style.whiteSpace = "pre-line"; message.textContent = t; }
 
-form.addEventListener("submit", async (e) => {
+async function onSeed(e) {
   e.preventDefault();
   message.textContent = "";
   const btn = form.querySelector("button");
   btn.disabled = true;
   try {
-    await signInAnonymously();
-
     // 現在の main のケア項目マスタをそのまま流用する
     let careItemsMaster = await db.getCareItemsMaster("main");
     if (!careItemsMaster || careItemsMaster.length === 0) {
@@ -64,4 +62,9 @@ form.addEventListener("submit", async (e) => {
   } finally {
     btn.disabled = false;
   }
-});
+}
+
+requireLogin(
+  () => form.addEventListener("submit", onSeed),
+  () => fail("このページを使うには先に login.html でログインしてください。"),
+);

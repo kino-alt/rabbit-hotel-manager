@@ -239,8 +239,11 @@ export async function updateBusyPeriods(storeId, busyPeriods) {
 
 // ---- 初期セットアップ用 ----
 
-export async function initConfig(commonPassword, managerPassword) {
-  await setDoc(doc(firestore, "config", "common"), { commonPassword, managerPassword });
+// 設定パスワード（設定画面の入口）だけを保存する。
+// スタッフのログインは Firebase Authentication の共有アカウントで行うため、
+// 共通パスワードは Firestore には置かない。
+export async function initConfig(managerPassword) {
+  await setDoc(doc(firestore, "config", "common"), { managerPassword });
 }
 
 export async function initStore(storeId, { name, holidays, careItemsMaster }) {
