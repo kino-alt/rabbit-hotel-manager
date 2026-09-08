@@ -141,8 +141,6 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     careCounts:    { "YYYY-MM-DD": { itemId: 回数 } }   (careItemsMaster.countable の項目のみ。通常項目は持たない)
     runSchedule:   { "YYYY-MM-DD": 回数 }
     photoSchedule: { "YYYY-MM-DD": "needed" | "not_needed" }   (無い日は自動判定。繁忙期は常に不要)
-    careTotals:    { itemId: 累計回数 }
-    runTotal:      累計回数
     dailyRecords:  { "YYYY-MM-DD": {
         care:  { items: { itemId: bool },              (通常項目)
                  counts: { itemId: { need, done } },   (回数式項目)
@@ -167,6 +165,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 | `getOrCreateDailyRecord` の引数 | `(rabbitId, date)` | `(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | 購読中の文書と店舗設定を渡して読み取り回数を減らすため |
 | `overview` での記録生成 | 資料では一覧でも `getOrCreateDailyRecord` | 一覧では**生成せず参照のみ** | 未来日の記録を先に作らないため。生成はケア/ラン画面で当日ぶんのみ |
 | セットアップ | (コンソール前提) | `setup.html` を追加 | コンソールを触らずに初期値を投入できるように |
+| `careTotals` / `runTotal` | 宿泊全体の累計を文書に持つ | **廃止**（2026-09） | どの画面も読んでおらず、チェック操作ごとに余計な書き込みが増える＋当日記録と非アトミックにズレる原因になっていた。累計が要るときは `dailyRecords` から集計する |
 
 ## データ層と同時アクセス対策
 
@@ -184,10 +183,14 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 ## 開発（テスト）
 
 ビルドは不要。純粋ロジック（日付計算・予定の3-wayマージ・当日記録の整合）に
-Node 標準のテストランナーでテストを用意している。依存パッケージはなし。
+Node 標準のテストランナーでテストを用意している。
 
 ```
+npm install       # 初回のみ（ESLint / Prettier）
 npm test          # tests/ 以下を実行（Node 20+ が必要）
+npm run lint      # ESLint
+npm run format    # Prettier で整形
+npm run check     # lint + format:check + test（CI と同じ）
 ```
 
 テスト対象（いずれも Firestore に依存しない純粋関数）:
@@ -198,5 +201,21 @@ npm test          # tests/ 以下を実行（Node 20+ が必要）
 | `public/scheduleGrid.js` | 登録STEP2の作業データ ↔ Firestore形式の変換、`buildEntry` |
 | `public/scheduleMerge.js` | `db.writeSchedulesMerge` の3-wayマージ判定（本体から切り出し） |
 | `public/careReconcile.js` | `dailyRecord.js` の `reconcileCare` / `computeAllDone`（本体から切り出し） |
+| `public/esc.js` | HTMLエスケープ |
 
-`main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が `npm test` を実行する。
+`main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が
+`npm run lint` / `npm run format:check` / `npm test` を実行する。
+
+## 本番に出す前の動作確認（プレビュー）
+
+実データに影響を与えずに変更を確認したいとき、Firebase Hosting のプレビューチャンネルを使う
+（同じプロジェクト・別URL・7日で自動失効。Spark でも可）:
+
+```
+firebase hosting:channel:deploy pr-xxx     # 一時URLが発行される
+firebase hosting:channel:delete pr-xxx     # 手動で消すとき
+```
+
+一時URLは Firestore/Auth は本番と共有する（＝本番データを触る）点に注意。
+データも完全に分けたい場合は、別の Firebase プロジェクトを作って `.firebaserc` に
+エイリアス（`firebase use --add`）を足し、`firebase-config.js` を切り替える。

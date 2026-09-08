@@ -25,19 +25,34 @@ export function reconcileCare(existingCare, schedIds, dayCounts, countableIds, r
   const counts = { ...(care.counts || {}) };
   let changed = false;
 
-  for (const id of wantPlain) if (!(id in items)) { items[id] = false; changed = true; }
+  for (const id of wantPlain)
+    if (!(id in items)) {
+      items[id] = false;
+      changed = true;
+    }
   for (const id of wantCount) {
     const need = dayCounts[id] || 1;
-    if (!counts[id]) { counts[id] = { need, done: 0 }; changed = true; }
-    else if ((counts[id].need || 0) !== need) { counts[id] = { ...counts[id], need }; changed = true; }
+    if (!counts[id]) {
+      counts[id] = { need, done: 0 };
+      changed = true;
+    } else if ((counts[id].need || 0) !== need) {
+      counts[id] = { ...counts[id], need };
+      changed = true;
+    }
   }
 
   if (removeUnfulfilled) {
     for (const id of Object.keys(items)) {
-      if (!wantPlain.has(id) && items[id] !== true) { delete items[id]; changed = true; }
+      if (!wantPlain.has(id) && items[id] !== true) {
+        delete items[id];
+        changed = true;
+      }
     }
     for (const id of Object.keys(counts)) {
-      if (!wantCount.has(id) && !((counts[id].done || 0) > 0)) { delete counts[id]; changed = true; }
+      if (!wantCount.has(id) && !((counts[id].done || 0) > 0)) {
+        delete counts[id];
+        changed = true;
+      }
     }
   }
   return { items, counts, changed };

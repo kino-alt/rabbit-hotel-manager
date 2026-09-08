@@ -2,9 +2,22 @@
 // 画面層・共通ロジック層はこのファイル経由でのみFirestoreに触れる。
 
 import {
-  doc, collection, getDoc, getDocs, setDoc, updateDoc, addDoc,
-  onSnapshot, query, where, serverTimestamp, increment, deleteField,
-  Timestamp, runTransaction, arrayUnion, arrayRemove,
+  doc,
+  collection,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  addDoc,
+  onSnapshot,
+  query,
+  where,
+  serverTimestamp,
+  deleteField,
+  Timestamp,
+  runTransaction,
+  arrayUnion,
+  arrayRemove,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { firestore, STORE_ID } from "./firebase-config.js";
@@ -43,8 +56,6 @@ export async function saveRabbit(storeId, data) {
     careCounts: {},
     runSchedule: {},
     photoSchedule: {},
-    careTotals: {},
-    runTotal: 0,
     dailyRecords: {},
     hiddenAt: null,
     expireAt: null,
@@ -89,18 +100,12 @@ export function subscribeAllRabbits(storeId, callback) {
 // TTL設定用のダミー（_placeholder）は除外する。
 export async function getAllRabbits(storeId) {
   const snap = await getDocs(rabbitsCol(storeId));
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .filter((r) => !r._placeholder);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => !r._placeholder);
 }
 
 // うさぎ文書内の dailyRecords.{date} 部分だけを部分更新する（マージ書き込み）
 export async function writeDailyRecord(storeId, rabbitId, date, data) {
-  await setDoc(
-    rabbitRef(storeId, rabbitId),
-    { dailyRecords: { [date]: data } },
-    { merge: true }
-  );
+  await setDoc(rabbitRef(storeId, rabbitId), { dailyRecords: { [date]: data } }, { merge: true });
 }
 
 // うさぎ文書の field path をまとめて更新する低レベル関数（updateDoc）。
@@ -109,15 +114,6 @@ export async function patchRabbit(storeId, rabbitId, fieldPatch) {
   if (fieldPatch && Object.keys(fieldPatch).length) {
     await updateDoc(rabbitRef(storeId, rabbitId), fieldPatch);
   }
-}
-
-// 宿泊全体の累計（careTotals / runTotal）を増減する
-export async function bumpTotals(storeId, rabbitId, { careItemId, careDelta = 0, runDelta = 0 }) {
-  const patch = {};
-  if (careItemId && careDelta) patch.careTotals = { [careItemId]: increment(careDelta) };
-  if (runDelta) patch.runTotal = increment(runDelta);
-  if (Object.keys(patch).length === 0) return;
-  await setDoc(rabbitRef(storeId, rabbitId), patch, { merge: true });
 }
 
 // その日のケア項目マップから1項目を完全に削除する
@@ -145,11 +141,12 @@ export async function deleteCareCountForDate(storeId, rabbitId, date, itemId) {
 export async function patchScheduleDay(storeId, rabbitId, ops) {
   const { addCareItem, removeCareItem, setCareCount, delCareCount, setRunCount } = ops;
   const patch = {};
-  if (addCareItem)    patch[`careSchedule.${addCareItem.date}`]    = arrayUnion(addCareItem.id);
+  if (addCareItem) patch[`careSchedule.${addCareItem.date}`] = arrayUnion(addCareItem.id);
   if (removeCareItem) patch[`careSchedule.${removeCareItem.date}`] = arrayRemove(removeCareItem.id);
-  if (setCareCount)   patch[`careCounts.${setCareCount.date}.${setCareCount.id}`] = setCareCount.n;
-  if (delCareCount)   patch[`careCounts.${delCareCount.date}.${delCareCount.id}`] = deleteField();
-  if (setRunCount)    patch[`runSchedule.${setRunCount.date}`] = setRunCount.n > 0 ? setRunCount.n : deleteField();
+  if (setCareCount) patch[`careCounts.${setCareCount.date}.${setCareCount.id}`] = setCareCount.n;
+  if (delCareCount) patch[`careCounts.${delCareCount.date}.${delCareCount.id}`] = deleteField();
+  if (setRunCount)
+    patch[`runSchedule.${setRunCount.date}`] = setRunCount.n > 0 ? setRunCount.n : deleteField();
   if (Object.keys(patch).length) await updateDoc(rabbitRef(storeId, rabbitId), patch);
 }
 
@@ -171,7 +168,6 @@ export async function writeSchedulesMerge(storeId, rabbitId, base, next) {
     return paths;
   });
 }
-
 
 // 宿泊終了：非表示にした日時と、その6ヶ月後のexpireAt（Firestore TTLの起点）を書き込む
 export async function hideRabbit(storeId, rabbitId) {
@@ -206,7 +202,9 @@ function shapeStoreConfig(s) {
   return {
     careItemsMaster: [...(s.careItemsMaster || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     holidays: s.holidays || { weekdays: [], dates: [] },
-    busyPeriods: [...(s.busyPeriods || [])].sort((a, b) => (a.start || "").localeCompare(b.start || "")),
+    busyPeriods: [...(s.busyPeriods || [])].sort((a, b) =>
+      (a.start || "").localeCompare(b.start || ""),
+    ),
   };
 }
 
@@ -272,8 +270,6 @@ export async function createPlaceholderRabbit(storeId) {
     careSchedule: {},
     runSchedule: {},
     photoSchedule: {},
-    careTotals: {},
-    runTotal: 0,
     dailyRecords: {},
     createdAt: serverTimestamp(),
     hiddenAt: serverTimestamp(),

@@ -18,8 +18,9 @@ function run() {
 
       const weekdays = [...document.querySelectorAll(".wd:checked")].map((c) => Number(c.value));
 
-      const careItemsMaster = document.getElementById("care-items").value
-        .split("\n")
+      const careItemsMaster = document
+        .getElementById("care-items")
+        .value.split("\n")
         .map((s) => s.trim())
         .filter(Boolean)
         .map((name, i) => ({ id: "c" + (i + 1) + "_" + Date.now().toString(36), name, order: i }));
@@ -49,6 +50,7 @@ function run() {
 
 requireLogin(run, () => {
   message.className = "msg error";
-  message.innerHTML = 'このページを使うには先に <a href="login.html">login.html</a> でログインしてください。';
+  message.innerHTML =
+    'このページを使うには先に <a href="login.html">login.html</a> でログインしてください。';
   form.querySelector("button[type=submit]").disabled = true;
 });

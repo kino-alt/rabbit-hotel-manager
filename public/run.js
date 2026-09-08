@@ -5,11 +5,20 @@ import * as db from "./db.js";
 import * as dr from "./dailyRecord.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
 import {
-  todayISO, addDays, formatJP, countableIdSet, calculateDefaultCareDate, calculatePhotoNeeded,
-  careOnDate, runOnDate, isStayEnded,
+  todayISO,
+  addDays,
+  formatJP,
+  countableIdSet,
+  calculateDefaultCareDate,
+  calculatePhotoNeeded,
+  careOnDate,
+  runOnDate,
+  isStayEnded,
 } from "./schedule.js";
 import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
+import { enableSwipeComplete } from "./swipe.js";
+import { esc } from "./esc.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -18,7 +27,7 @@ const dayLabel = document.getElementById("day-label");
 let currentDate = todayISO();
 let rabbits = [];
 let careMaster = [];
-let careNames = new Map();   // itemId -> name（find の線形探索を避ける）
+let careNames = new Map(); // itemId -> name（find の線形探索を避ける）
 let holidays = { weekdays: [], dates: [] };
 let busyPeriods = [];
 let countableIds = new Set();
@@ -44,7 +53,7 @@ function careForDay(r, date) {
 }
 const expanded = new Set();
 const ensured = new Set();
-let showSent = false;   // すべて送信済みのうさぎも一覧に出すか
+let showSent = false; // すべて送信済みのうさぎも一覧に出すか
 
 function activeOnDate(r, date) {
   return r.checkInDate <= date && date <= r.checkOutDate;
@@ -73,8 +82,13 @@ function isAllSent(r) {
   const ci = careForDay(r, currentDate);
   if (ci && !ci.lineSent) return false;
   // ラン・ケアがある日は写真は対象外
-  if (needed === 0 && !ci && photoNeededToday(r, currentDate)
-      && !(rec && rec.photo && rec.photo.sent)) return false;
+  if (
+    needed === 0 &&
+    !ci &&
+    photoNeededToday(r, currentDate) &&
+    !(rec && rec.photo && rec.photo.sent)
+  )
+    return false;
   return true;
 }
 
@@ -86,18 +100,30 @@ function hasRun(r, date) {
 
 async function ensureRecords() {
   for (const r of rabbits) {
-    if (isStayEnded(r)) continue;   // 宿泊終了ぶんは閲覧のみ。新しい記録は作らない
+    if (isStayEnded(r)) continue; // 宿泊終了ぶんは閲覧のみ。新しい記録は作らない
     if (!activeOnDate(r, currentDate) || !hasTask(r, currentDate)) continue;
     // 予定（careSchedule/careCounts/runSchedule）が変わったら取り込み直す
-    const key = r.id + "|" + currentDate + "|" + JSON.stringify([
-      (r.careSchedule && r.careSchedule[currentDate]) || [],
-      (r.careCounts && r.careCounts[currentDate]) || {},
-      (r.runSchedule && r.runSchedule[currentDate]) || 0,
-    ]);
+    const key =
+      r.id +
+      "|" +
+      currentDate +
+      "|" +
+      JSON.stringify([
+        (r.careSchedule && r.careSchedule[currentDate]) || [],
+        (r.careCounts && r.careCounts[currentDate]) || {},
+        (r.runSchedule && r.runSchedule[currentDate]) || 0,
+      ]);
     if (ensured.has(key)) continue;
     ensured.add(key);
     try {
-      await dr.getOrCreateDailyRecord(STORE_ID, r, currentDate, holidays, busyPeriods, countableIds);
+      await dr.getOrCreateDailyRecord(
+        STORE_ID,
+        r,
+        currentDate,
+        holidays,
+        busyPeriods,
+        countableIds,
+      );
     } catch (err) {
       console.error(err);
       ensured.delete(key);
@@ -144,10 +170,12 @@ function render() {
   // ここでは飼い主名で並べておき、分類・飼い主まとめは renderByTaskType / renderOwnerGroups で行う。
   const active = rabbits
     .filter((r) => activeOnDate(r, currentDate) && hasTask(r, currentDate))
-    .sort((a, b) =>
-      (a.ownerLastName || "").localeCompare(b.ownerLastName || "", "ja")
-      || taskRank(a) - taskRank(b)
-      || (a.rabbitName || "").localeCompare(b.rabbitName || "", "ja"));
+    .sort(
+      (a, b) =>
+        (a.ownerLastName || "").localeCompare(b.ownerLastName || "", "ja") ||
+        taskRank(a) - taskRank(b) ||
+        (a.rabbitName || "").localeCompare(b.rabbitName || "", "ja"),
+    );
 
   const pending = active.filter((r) => !isAllSent(r));
   const sentList = active.filter(isAllSent);
@@ -160,7 +188,10 @@ function render() {
     const t = document.createElement("button");
     t.className = "ghost small list-toggle";
     t.textContent = showSent ? "送信済み分を隠す" : `送信済み分を表示（${sentList.length}）`;
-    t.addEventListener("click", () => { showSent = !showSent; render(); });
+    t.addEventListener("click", () => {
+      showSent = !showSent;
+      render();
+    });
     listEl.appendChild(t);
 
     if (showSent) {
@@ -173,7 +204,7 @@ function render() {
 // list を飼い主ごとに区切って描画。2匹以上の飼い主には見出し帯を付け、
 // その飼い主の「今日ぶん」の送信進捗（x/N）を出して送り漏れを防ぐ。
 function renderOwnerGroups(list, sentView) {
-  for (let i = 0; i < list.length; ) {
+  for (let i = 0; i < list.length;) {
     const owner = list[i].ownerLastName || "";
     let j = i;
     while (j < list.length && (list[j].ownerLastName || "") === owner) j++;
@@ -202,8 +233,11 @@ function renderOwnerGroups(list, sentView) {
 function buildNote(r) {
   const parts = [];
   if (r.isFirstTime) parts.push("初");
-  if (r.transportPickup && r.checkOutDate
-      && currentDate === calculateDefaultCareDate(r.checkOutDate, holidays)) {
+  if (
+    r.transportPickup &&
+    r.checkOutDate &&
+    currentDate === calculateDefaultCareDate(r.checkOutDate, holidays)
+  ) {
     parts.push("明日送迎");
   }
   if (r.note) parts.push("備考：" + r.note);
@@ -226,16 +260,18 @@ function cardHead(r, status, opts = {}) {
 
   const name = spanEl("name grow", `${r.ownerLastName || ""} ${r.rabbitName || ""}`);
   // status は文字列でも DOM ノードでもよい（写真カードは撮影チェックをここに入れる）
-  const st = status instanceof Node
-    ? status
-    : spanEl("count" + (sent ? " count-sent" : ""), status || "");
+  const st =
+    status instanceof Node ? status : spanEl("count" + (sent ? " count-sent" : ""), status || "");
 
   const help = document.createElement("span");
   help.className = "help";
   help.setAttribute("role", "button");
   help.setAttribute("aria-label", "この子の予定を見る");
   help.textContent = "?";
-  help.addEventListener("click", (e) => { e.stopPropagation(); openSchedule(r); });
+  help.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openSchedule(r);
+  });
 
   head.append(name, st, help);
   if (expandable) head.append(spanEl("tri", open ? "▲" : "▼"));
@@ -344,7 +380,11 @@ function renderCareOnlyCard(r, sentView, ci) {
     const head = cardHead(r, "ケア 送信済み", { sent: true });
     card.appendChild(head);
     if (note) card.appendChild(note);
-    card.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError))));
+    card.appendChild(
+      rowEnd(
+        undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)),
+      ),
+    );
     return card;
   }
 
@@ -354,7 +394,9 @@ function renderCareOnlyCard(r, sentView, ci) {
   if (ci.careDone) {
     // 実施済みになったらケア項目を出す＋パネルごとスワイプ
     const detail = detailLine("実施：" + (ci.doneNames.join(" / ") || "―"));
-    swipeWholeCard(card, head, [note, detail], () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError));
+    swipeWholeCard(card, head, [note, detail], () =>
+      dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError),
+    );
   } else {
     // 未完了：ヘッダーのみ（「ケア担当が未完了です」は出さない）
     card.appendChild(head);
@@ -364,7 +406,6 @@ function renderCareOnlyCard(r, sentView, ci) {
 }
 
 function renderCard(r, sentView) {
-  const rec = (r.dailyRecords && r.dailyRecords[currentDate]) || null;
   const { need: needed, done, sent } = runOnDate(r, currentDate);
   const ci = careForDay(r, currentDate);
   const isRun = needed > 0;
@@ -384,7 +425,9 @@ function renderCard(r, sentView) {
   if (isRun) {
     summary = `ラン ${done}/${needed}`;
   } else {
-    summary = ("ケア " + (ci && ci.lineSent ? "送信済み" : ci && !ci.careDone ? "未完了" : "")).trim();
+    summary = (
+      "ケア " + (ci && ci.lineSent ? "送信済み" : ci && !ci.careDone ? "未完了" : "")
+    ).trim();
   }
 
   const head = cardHead(r, summary, {
@@ -431,7 +474,11 @@ function renderCard(r, sentView) {
       const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
       info.classList.add("info-pad");
       careSec.appendChild(info);
-      careSec.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError))));
+      careSec.appendChild(
+        rowEnd(
+          undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)),
+        ),
+      );
       body.appendChild(careSec);
     }
   } else {
@@ -469,7 +516,7 @@ function renderCard(r, sentView) {
           row.appendChild(spanEl("run-state", "送信待ち"));
           runSec.appendChild(row);
         } else {
-          runSec.appendChild(row);   // 未実施：チェックのみ
+          runSec.appendChild(row); // 未実施：チェックのみ
         }
       }
       body.appendChild(runSec);
@@ -483,7 +530,11 @@ function renderCard(r, sentView) {
         info.classList.add("info-pad");
         careSec.appendChild(info);
         careSec.appendChild(swipeNote("スワイプで完了"));
-        body.appendChild(wrapSwipe(careSec, () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)));
+        body.appendChild(
+          wrapSwipe(careSec, () =>
+            dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError),
+          ),
+        );
       } else {
         careSec.appendChild(mutedLine("ケア担当が未完了です"));
         body.appendChild(careSec);
@@ -532,7 +583,10 @@ function undoButton(onClick, label = "取り消す") {
   b.type = "button";
   b.className = "undo-btn";
   b.textContent = label;
-  b.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    onClick();
+  });
   return b;
 }
 // 要素を右寄せの1行にくるむ（取り消しボタンを「送信済み」表示の側にそろえる）
@@ -553,73 +607,15 @@ function swipeNote(text, inline) {
   return d;
 }
 
-// 左スワイプで onComplete を呼ぶ（ケア画面の enableSwipeComplete と同じ）
-function enableSwipeComplete(card, fg, onComplete) {
-  const THRESHOLD = 90;
-  let startX = 0, startY = 0, dx = 0, dragging = false, decided = false, horiz = false;
-
-  const snapBack = () => {
-    fg.style.transition = "transform .2s";
-    fg.style.transform = "";
-    fg.style.animation = "";
-    setTimeout(() => { fg.style.transition = ""; }, 200);
-  };
-
-  card.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    startX = e.clientX; startY = e.clientY;
-    dx = 0; dragging = true; decided = false; horiz = false;
-    fg.style.transition = "";
-    fg.style.animation = "none";
-  });
-  card.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const mx = e.clientX - startX, my = e.clientY - startY;
-    if (!decided) {
-      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-      decided = true;
-      horiz = Math.abs(mx) > Math.abs(my);
-      if (horiz) card.setPointerCapture(e.pointerId);
-      else { dragging = false; fg.style.animation = ""; return; }
-    }
-    e.preventDefault();
-    dx = Math.min(0, mx);
-    fg.style.transform = `translateX(${dx}px)`;
-    card.classList.toggle("armed", -dx >= THRESHOLD);
-  });
-  const end = () => {
-    if (!dragging) return;
-    dragging = false;
-    card.classList.remove("armed");
-    if (decided && horiz) {
-      // 直後の click（展開トグル）を無効化
-      const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
-      card.addEventListener("click", swallow, true);
-      setTimeout(() => card.removeEventListener("click", swallow, true), 350);
-    }
-    if (-dx >= THRESHOLD) {
-      fg.style.transition = "transform .18s";
-      fg.style.transform = "translateX(-110%)";
-      setTimeout(onComplete, 160);
-    } else {
-      snapBack();
-    }
-  };
-  card.addEventListener("pointerup", end);
-  card.addEventListener("pointercancel", end);
-}
 function onPhotoCheck(r, field, value) {
   dr.updatePhotoStatus(STORE_ID, r, currentDate, field, value).catch(notifyWriteError);
-}
-
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
 // ---- 予定オーバーレイ（全体一覧と同じ様式で、その子だけ） ----
 function openSchedule(r) {
   const ov = document.getElementById("sched-overlay");
-  ov.querySelector("#sched-title").textContent = `${r.ownerLastName || ""} ${r.rabbitName || ""} の予定`;
+  ov.querySelector("#sched-title").textContent =
+    `${r.ownerLastName || ""} ${r.rabbitName || ""} の予定`;
   ov.querySelector("#sched-body").innerHTML =
     `<div class="scroll-x">${rabbitScheduleTableHTML(r, { holidays, busyPeriods, countableIds })}</div>`;
   ov.hidden = false;
@@ -631,10 +627,20 @@ document.getElementById("sched-overlay").addEventListener("click", (e) => {
   if (e.target.id === "sched-overlay") closeSchedule();
 });
 document.getElementById("sched-close").addEventListener("click", closeSchedule);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSchedule(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSchedule();
+});
 
-document.getElementById("prev-day").addEventListener("click", () => { currentDate = addDays(currentDate, -1); render(); ensureRecords(); });
-document.getElementById("next-day").addEventListener("click", () => { currentDate = addDays(currentDate, 1); render(); ensureRecords(); });
+document.getElementById("prev-day").addEventListener("click", () => {
+  currentDate = addDays(currentDate, -1);
+  render();
+  ensureRecords();
+});
+document.getElementById("next-day").addEventListener("click", () => {
+  currentDate = addDays(currentDate, 1);
+  render();
+  ensureRecords();
+});
 
 requireAuth(() => {
   document.getElementById("store-name").textContent = currentStoreName();
@@ -646,15 +652,15 @@ requireAuth(() => {
     holidays = cfg.holidays;
     busyPeriods = cfg.busyPeriods;
     if (rabbitsStarted) {
-      render();   // 設定変更（ケア項目・定休日）を反映
+      render(); // 設定変更（ケア項目・定休日）を反映
       return;
     }
     rabbitsStarted = true;
     // 宿泊終了ぶんも購読し、過去の日付を開けばその記録が見られるようにする
     db.subscribeAllRabbits(STORE_ID, (list) => {
       rabbits = list;
-      render();          // まず現状を描画
-      ensureRecords();   // 予定の取り込みは裏で（書き込み後に再描画される）
+      render(); // まず現状を描画
+      ensureRecords(); // 予定の取り込みは裏で（書き込み後に再描画される）
     });
   });
 });
