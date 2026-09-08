@@ -35,40 +35,41 @@
   background: var(--holiday);
 }
 
-/* アイコン（public/icons/<name>.svg を CSS mask で表示）。色は currentColor */
+/* アイコン。SVG を data URI で背景画像として埋め込む（外部ファイルなし・mask不使用＝確実に表示）。
+   色は SVG に直接指定（緑=ナビ/操作、グレー=補助）。編集用に同じ SVG を public/icons/ にも置く。 */
 .ico {
   display: inline-block;
   width: 1.15em;
   height: 1.15em;
   vertical-align: -0.15em;
   flex: 0 0 auto;
-  background-color: currentColor;
-  -webkit-mask: var(--i) center / contain no-repeat;
-  mask: var(--i) center / contain no-repeat;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 .ico-chevron-left {
-  --i: url("/icons/chevron-left.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M15%205l-7%207%207%207'/%3E%3C/svg%3E");
 }
 .ico-chevron-right {
-  --i: url("/icons/chevron-right.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M9%205l7%207-7%207'/%3E%3C/svg%3E");
 }
 .ico-menu {
-  --i: url("/icons/menu.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%207h16M4%2012h16M4%2017h16'/%3E%3C/svg%3E");
 }
 .ico-close {
-  --i: url("/icons/close.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M6%206l12%2012M18%206L6%2018'/%3E%3C/svg%3E");
 }
 .ico-plus {
-  --i: url("/icons/plus.svg");
-}
-.ico-help {
-  --i: url("/icons/help.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23ffffff'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%205v14M5%2012h14'/%3E%3C/svg%3E");
 }
 .ico-caret {
-  --i: url("/icons/caret.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%235F5E5A'%20stroke-width='2.4'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M6%209l6%206%206-6'/%3E%3C/svg%3E");
+}
+.ico-help {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%235F5E5A'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d=%27M9.1%209.2a3%203%200%201%201%204.7%202.9c-1%20.6-1.8%201.3-1.8%202.6%27/%3E%3Ccircle%20cx=%2712%27%20cy=%2718%27%20r=%271.2%27%20fill=%27%235F5E5A%27%20stroke=%27none%27/%3E%3C/svg%3E");
 }
 .ico-grip {
-  --i: url("/icons/grip.svg");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='%235F5E5A'%3E%3Ccircle%20cx='9'%20cy='6'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='6'%20r='1.6'/%3E%3Ccircle%20cx='9'%20cy='12'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='12'%20r='1.6'/%3E%3Ccircle%20cx='9'%20cy='18'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='18'%20r='1.6'/%3E%3C/svg%3E");
 }
 
 * {
@@ -1062,6 +1063,18 @@ table.overview td.cell-empty {
   font-size: 11px;
   color: var(--muted);
   margin: 0 0 6px;
+}
+
+/* 登録STEP2の最後：担当スタッフ名（予定表そのものではない補足入力なので、
+   カード地色の控えめな箱にして「メモ」であることを分かるようにする） */
+.staff-confirm {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 6px;
+}
+.staff-confirm .field > span {
+  font-weight: 600;
 }
 .sched-hint b {
   color: var(--accent-dark);
