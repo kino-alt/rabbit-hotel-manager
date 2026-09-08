@@ -961,6 +961,14 @@ table.overview td.rabbit-name {
   line-height: 1.15;
   font-size: 11px;
 }
+/* 一覧のうさぎ名の下に「担当 ○○」（確認しやすいように） */
+.overview .ov-staff {
+  display: block;
+  margin-top: 1px;
+  font-size: 9px;
+  font-weight: normal;
+  color: var(--sub);
+}
 .overview.compact th.kind,
 .overview.compact td.kind {
   position: sticky;
