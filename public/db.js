@@ -13,7 +13,6 @@ import {
   query,
   where,
   serverTimestamp,
-  increment,
   deleteField,
   Timestamp,
   runTransaction,
@@ -57,8 +56,6 @@ export async function saveRabbit(storeId, data) {
     careCounts: {},
     runSchedule: {},
     photoSchedule: {},
-    careTotals: {},
-    runTotal: 0,
     dailyRecords: {},
     hiddenAt: null,
     expireAt: null,
@@ -117,15 +114,6 @@ export async function patchRabbit(storeId, rabbitId, fieldPatch) {
   if (fieldPatch && Object.keys(fieldPatch).length) {
     await updateDoc(rabbitRef(storeId, rabbitId), fieldPatch);
   }
-}
-
-// 宿泊全体の累計（careTotals / runTotal）を増減する
-export async function bumpTotals(storeId, rabbitId, { careItemId, careDelta = 0, runDelta = 0 }) {
-  const patch = {};
-  if (careItemId && careDelta) patch.careTotals = { [careItemId]: increment(careDelta) };
-  if (runDelta) patch.runTotal = increment(runDelta);
-  if (Object.keys(patch).length === 0) return;
-  await setDoc(rabbitRef(storeId, rabbitId), patch, { merge: true });
 }
 
 // その日のケア項目マップから1項目を完全に削除する
@@ -282,8 +270,6 @@ export async function createPlaceholderRabbit(storeId) {
     careSchedule: {},
     runSchedule: {},
     photoSchedule: {},
-    careTotals: {},
-    runTotal: 0,
     dailyRecords: {},
     createdAt: serverTimestamp(),
     hiddenAt: serverTimestamp(),

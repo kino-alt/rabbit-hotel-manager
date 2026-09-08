@@ -148,12 +148,6 @@ export async function updateCareItem(storeId, rabbit, date, itemId, done) {
   const allDone = computeAllDone(items, rec.care.counts);
 
   await db.writeDailyRecord(storeId, rabbit.id, date, { care: { items, allDone } });
-
-  const was = rec.care.items && rec.care.items[itemId] === true;
-  let delta = 0;
-  if (done && !was) delta = 1;
-  else if (!done && was) delta = -1;
-  if (delta) await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: delta });
 }
 
 // 回数式ケア項目の実施回数を設定する（done は新しい実施回数 0..need）
@@ -169,7 +163,6 @@ export async function setCareCount(storeId, rabbit, date, itemId, done) {
   await db.writeDailyRecord(storeId, rabbit.id, date, {
     care: { counts: { [itemId]: counts[itemId] }, allDone },
   });
-  await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: delta });
 }
 
 // その日だけケア項目を追加する（careScheduleマスタは変更しない）
@@ -198,28 +191,21 @@ export async function removeCareItemForToday(storeId, rabbit, date, itemId, coun
   const rec = recordOf(rabbit, date);
 
   if (countable) {
-    const cur = (rec.care.counts && rec.care.counts[itemId]) || { done: 0 };
     await db.deleteCareCountForDate(storeId, rabbit.id, date, itemId);
     const remaining = { ...(rec.care.counts || {}) };
     delete remaining[itemId];
     await db.writeDailyRecord(storeId, rabbit.id, date, {
       care: { allDone: computeAllDone(rec.care.items, remaining) },
     });
-    if (cur.done)
-      await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: -cur.done });
     return;
   }
 
-  const wasDone = rec.care.items && rec.care.items[itemId] === true;
   await db.deleteCareItemForDate(storeId, rabbit.id, date, itemId);
   const remaining = { ...(rec.care.items || {}) };
   delete remaining[itemId];
   await db.writeDailyRecord(storeId, rabbit.id, date, {
     care: { allDone: computeAllDone(remaining, rec.care.counts) },
   });
-  if (wasDone) {
-    await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: -1 });
-  }
 }
 
 // ---- ケア担当「項目を編集」：その日の予定（careSchedule/careCounts）と当日記録の両方を直す ----
@@ -276,7 +262,6 @@ export async function updateRunCheck(storeId, rabbit, date, index, done) {
   if (delta === 0) return;
 
   await db.writeDailyRecord(storeId, rabbit.id, date, { run: { doneCount: next } });
-  await db.bumpTotals(storeId, rabbit.id, { runDelta: delta });
 }
 
 // ラン1回分をLINE送信済みにする
