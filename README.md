@@ -209,12 +209,29 @@ npm run check     # lint + format:check + test（CI と同じ）
 |---|---|
 | `public/schedule.js` | 日付ユーティリティ、定休日・繁忙期判定、`careOnDate` / `runOnDate` / `calculatePhotoNeeded` |
 | `public/scheduleGrid.js` | 登録STEP2の作業データ ↔ Firestore形式の変換、`buildEntry` |
+| `public/registerGridView.js` | STEP2 グリッドのHTML生成（`scheduleTableHTML` / `careBreakdownHTML`） |
 | `public/scheduleMerge.js` | `db.writeSchedulesMerge` の3-wayマージ判定（本体から切り出し） |
 | `public/careReconcile.js` | `dailyRecord.js` の `reconcileCare` / `computeAllDone`（本体から切り出し） |
 | `public/esc.js` | HTMLエスケープ |
 
 `main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が
 `npm run lint` / `npm run format:check` / `npm test` を実行する。
+
+## ページ移動のもたつきについて
+
+画面ごとに別HTML（MPA）なので、移動のたびに Firebase 一式を初期化し直す。軽減のため：
+
+- 各HTMLの `<head>` に `preconnect`（gstatic / firestore / securetoken）と `modulepreload`（vendor.js）
+- **App Check（reCAPTCHA Enterprise）はアイドル時に遅延初期化**（`firebase-config.js`）。
+  reCAPTCHA スクリプトの読み込みが重く、毎ページの描画を待たせていたのを外した。
+- `firebase.json`：HTML は `no-cache`（毎回最新）、**JS/CSS/SVG は `max-age=3600`（1時間キャッシュ）**。
+  作業中の画面移動でファイルを取り直さない。
+  - デプロイした変更が端末に届くまで最大1時間（運用開始後はほぼデプロイしない前提）。
+  - **開発中にデプロイした変更をすぐ確認したいときはハード再読み込み**
+    （スマホ：サイトのデータを削除／PC：Ctrl+Shift+R）。`firebase serve` やプレビューチャンネルは常に最新。
+  - HTML と JS を同時に変えたデプロイの直後だけ、旧JS＋新HTMLで一時的にズレる可能性 → 再読み込みで解消。
+
+完全に無くすには SPA 化（1ページ＋クライアントルーティング）が必要だが、規模的に見合わない。
 
 ## 本番に出す前の動作確認（プレビュー）
 

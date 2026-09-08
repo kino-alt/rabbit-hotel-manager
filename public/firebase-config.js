@@ -67,20 +67,6 @@ export function currentStoreName() {
 }
 
 export const app = initializeApp(firebaseConfig);
-
-// App Check：初期化は initializeApp の直後、他のサービス利用より前に行う。
-// サイトキー未設定なら何もしない（enforcement をコンソールで有効にする前でも動く）。
-if (RECAPTCHA_SITE_KEY) {
-  try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
-      isTokenAutoRefreshEnabled: true,
-    });
-  } catch (e) {
-    console.warn("App Check を初期化できませんでした", e);
-  }
-}
-
 export const auth = getAuth(app);
 
 // オフライン永続化つきで Firestore を初期化する。
@@ -97,3 +83,25 @@ export const firestore = (() => {
     return initializeFirestore(app, {});
   }
 })();
+
+// App Check（reCAPTCHA Enterprise）はスクリプト読み込みが重く、ページ移動のたびに走ると
+// もたつきの原因になる。描画をブロックしないよう、初回ペイント後（アイドル時）に初期化する。
+// enforcement 有効化前はトークン無しでも通る。有効化後も、最初の読み取りはローカルキャッシュから
+// 即返るため、サーバ同期がトークンを少し待つだけで済む。
+if (RECAPTCHA_SITE_KEY) {
+  const startAppCheck = () => {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (e) {
+      console.warn("App Check を初期化できませんでした", e);
+    }
+  };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(startAppCheck, { timeout: 3000 });
+  } else {
+    setTimeout(startAppCheck, 800);
+  }
+}
