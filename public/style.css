@@ -961,13 +961,20 @@ table.overview td.rabbit-name {
   line-height: 1.15;
   font-size: 11px;
 }
-/* 一覧のうさぎ名の下に「担当 ○○」（確認しやすいように） */
+/* うさぎ名セルの右下に「担当 ○○」。rowspan=3 のセル全体の右下に貼り付ける */
+.overview.compact td.rabbit-name {
+  padding-bottom: 14px;
+}
 .overview .ov-staff {
-  display: block;
-  margin-top: 1px;
-  font-size: 9px;
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-size: 10px;
   font-weight: normal;
-  color: var(--sub);
+  line-height: 1.1;
+  color: var(--text);
+  background: var(--bg);
+  padding-left: 3px;
 }
 .overview.compact th.kind,
 .overview.compact td.kind {
