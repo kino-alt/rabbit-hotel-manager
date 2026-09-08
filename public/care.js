@@ -16,6 +16,7 @@ import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
 import { enableSwipeComplete } from "./swipe.js";
 import { esc } from "./esc.js";
+import { caret } from "./icons.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -202,8 +203,8 @@ function renderCard(r) {
   head.appendChild(help);
 
   const tri = document.createElement("span");
-  tri.className = "tri";
-  tri.textContent = expanded.has(r.id) ? "▲" : "▼";
+  tri.className = "tri" + (expanded.has(r.id) ? " open" : "");
+  tri.innerHTML = caret();
   head.appendChild(tri);
 
   head.addEventListener("click", () => {
