@@ -5,7 +5,7 @@
 > **改訂4（2026-09）の要点**（本文の該当箇所も反映済み）：
 > ログインは匿名認証 → メール/パスワードの共有アカウント（`signInWithEmailAndPassword`）。
 > `db.bumpTotals()` と `careTotals` / `runTotal` は廃止。
-> 登録時に `registeredBy`（担当スタッフ名）を入力。最新は `README.md`。
+> 登録時に `staffName`（担当スタッフ名）を入力。最新は `README.md`。
 
 **改訂内容**
 

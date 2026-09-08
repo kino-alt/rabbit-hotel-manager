@@ -11,7 +11,7 @@
   ルールは `request.auth.token.firebase.sign_in_provider == 'password'` を要求。
 - `config/common` から **`commonPassword` を削除**（ログインは Firebase Auth 側）。`managerPassword` のみ残す。
 - **`careTotals` / `runTotal` と `db.bumpTotals()` を廃止**（どの画面も読んでおらず、当日記録と非アトミックにズレる原因だった）。累計が要れば `dailyRecords` から集計する。
-- うさぎ文書に **`registeredBy`**（登録した担当スタッフ名。登録時のみ入力）を追加。
+- うさぎ文書に **`staffName`**（登録した担当スタッフ名。登録時のみ入力）を追加。
 - App Check（reCAPTCHA Enterprise）と Firestore オフライン永続化を導入。
 
 
@@ -69,7 +69,7 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
         transportPickup    … 送迎:お迎え時(true/false)
         isFirstTime        … 初めてか(true/false)
         note               … 備考
-        registeredBy       … この登録をした担当スタッフ名(登録時のみ入力。未入力なら null)
+        staffName          … 担当スタッフ名(登録時のみ入力・必須)
         createdAt          … 作成日時(serverTimestamp)
         hiddenAt           … 非表示にした日時(通常は null。宿泊終了操作で serverTimestamp)
         expireAt           … hiddenAt の約6ヶ月後(Timestamp型。Firestore TTL の対象。通常は null)
