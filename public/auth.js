@@ -49,7 +49,10 @@ export async function changeStaffPassword(currentPassword, newPassword) {
     throw new Error("新しいパスワードは6文字以上にしてください");
   }
   // 今のパスワードで再認証してから変更（Firebase が最近のログインを要求するため）
-  await reauthenticateWithCredential(user, EmailAuthProvider.credential(STAFF_EMAIL, currentPassword));
+  await reauthenticateWithCredential(
+    user,
+    EmailAuthProvider.credential(STAFF_EMAIL, currentPassword),
+  );
   await updatePassword(user, newPassword);
 }
 

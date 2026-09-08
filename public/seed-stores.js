@@ -15,12 +15,20 @@ const message = document.getElementById("message");
 const CARE_FALLBACK = ["爪切り", "ブラッシング", "お耳ケア", "お尻ケア"];
 
 const TARGETS = [
-  { id: "store_1", name: "本店", weekdays: [2, 4] },   // 火・木
-  { id: "store_2", name: "豊中店", weekdays: [3, 4] },  // 水・木
+  { id: "store_1", name: "本店", weekdays: [2, 4] }, // 火・木
+  { id: "store_2", name: "豊中店", weekdays: [3, 4] }, // 水・木
 ];
 
-function info(t) { message.className = "msg info"; message.style.whiteSpace = "pre-line"; message.textContent = t; }
-function fail(t) { message.className = "msg error"; message.style.whiteSpace = "pre-line"; message.textContent = t; }
+function info(t) {
+  message.className = "msg info";
+  message.style.whiteSpace = "pre-line";
+  message.textContent = t;
+}
+function fail(t) {
+  message.className = "msg error";
+  message.style.whiteSpace = "pre-line";
+  message.textContent = t;
+}
 
 async function onSeed(e) {
   e.preventDefault();
@@ -52,9 +60,11 @@ async function onSeed(e) {
     }
 
     info(
-      "登録しました：\n" + done.join("\n") +
-      "\nケア項目：" + careItemsMaster.map((c) => c.name).join("、") +
-      "\n次に Firestore コンソールの TTL で rabbits / expireAt のポリシーを有効化してください。"
+      "登録しました：\n" +
+        done.join("\n") +
+        "\nケア項目：" +
+        careItemsMaster.map((c) => c.name).join("、") +
+        "\n次に Firestore コンソールの TTL で rabbits / expireAt のポリシーを有効化してください。",
     );
   } catch (err) {
     console.error(err);

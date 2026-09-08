@@ -4,9 +4,18 @@ import { requireAuth } from "./auth.js";
 import * as db from "./db.js";
 import * as dr from "./dailyRecord.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
-import { todayISO, addDays, formatJP, countableIdSet, careOnDate, isStayEnded } from "./schedule.js";
+import {
+  todayISO,
+  addDays,
+  formatJP,
+  countableIdSet,
+  careOnDate,
+  isStayEnded,
+} from "./schedule.js";
 import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
+import { enableSwipeComplete } from "./swipe.js";
+import { esc } from "./esc.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -15,13 +24,13 @@ const dayLabel = document.getElementById("day-label");
 let currentDate = todayISO();
 let rabbits = [];
 let careMaster = [];
-let careIndex = new Map();   // itemId -> { name, order位置 }（find/findIndex の線形探索を避ける）
+let careIndex = new Map(); // itemId -> { name, order位置 }（find/findIndex の線形探索を避ける）
 let countableIds = new Set();
 let holidays = { weekdays: [], dates: [] };
 let busyPeriods = [];
 const expanded = new Set();
 const editing = new Set();
-let showDone = false;   // ケア完了ぶんも一覧に出すか
+let showDone = false; // ケア完了ぶんも一覧に出すか
 
 // 「ケア完了」を押したうさぎ（＝一覧から隠す対象）
 function isCareDone(r) {
@@ -57,18 +66,30 @@ function scheduledCare(r, date) {
 async function ensureRecords() {
   // 未来日でも先取りでケアできるよう、予定のあるうさぎには記録を用意する
   for (const r of rabbits) {
-    if (isStayEnded(r)) continue;   // 宿泊終了ぶんは閲覧のみ。新しい記録は作らない
+    if (isStayEnded(r)) continue; // 宿泊終了ぶんは閲覧のみ。新しい記録は作らない
     if (!activeOnDate(r, currentDate) || !hasCare(r, currentDate)) continue;
     // 予定（careSchedule/careCounts/runSchedule）が変わったら取り込み直す
-    const key = r.id + "|" + currentDate + "|" + JSON.stringify([
-      (r.careSchedule && r.careSchedule[currentDate]) || [],
-      (r.careCounts && r.careCounts[currentDate]) || {},
-      (r.runSchedule && r.runSchedule[currentDate]) || 0,
-    ]);
+    const key =
+      r.id +
+      "|" +
+      currentDate +
+      "|" +
+      JSON.stringify([
+        (r.careSchedule && r.careSchedule[currentDate]) || [],
+        (r.careCounts && r.careCounts[currentDate]) || {},
+        (r.runSchedule && r.runSchedule[currentDate]) || 0,
+      ]);
     if (ensured.has(key)) continue;
     ensured.add(key);
     try {
-      await dr.getOrCreateDailyRecord(STORE_ID, r, currentDate, holidays, busyPeriods, countableIds);
+      await dr.getOrCreateDailyRecord(
+        STORE_ID,
+        r,
+        currentDate,
+        holidays,
+        busyPeriods,
+        countableIds,
+      );
     } catch (err) {
       console.error("getOrCreateDailyRecord", err);
       ensured.delete(key);
@@ -96,7 +117,10 @@ function render() {
     const t = document.createElement("button");
     t.className = "ghost small list-toggle";
     t.textContent = showDone ? "実施済み分を隠す" : `実施済み分を表示（${done.length}）`;
-    t.addEventListener("click", () => { showDone = !showDone; render(); });
+    t.addEventListener("click", () => {
+      showDone = !showDone;
+      render();
+    });
     listEl.appendChild(t);
 
     if (showDone) {
@@ -116,7 +140,11 @@ function renderCard(r) {
   let plainIds, countRows;
   if (rec && rec.care) {
     plainIds = Object.keys(rec.care.items || {});
-    countRows = Object.entries(rec.care.counts || {}).map(([id, c]) => ({ id, need: c.need || 0, done: c.done || 0 }));
+    countRows = Object.entries(rec.care.counts || {}).map(([id, c]) => ({
+      id,
+      need: c.need || 0,
+      done: c.done || 0,
+    }));
   } else {
     const s = scheduledCare(r, currentDate);
     plainIds = s.plain;
@@ -129,8 +157,9 @@ function renderCard(r) {
   const allIds = [...plainIds, ...countRows.map((c) => c.id)];
 
   const total = plainIds.length + countRows.reduce((n, c) => n + c.need, 0);
-  const doneCount = (rec ? plainIds.filter((id) => rec.care.items[id] === true).length : 0)
-    + countRows.reduce((n, c) => n + Math.min(c.done, c.need), 0);
+  const doneCount =
+    (rec ? plainIds.filter((id) => rec.care.items[id] === true).length : 0) +
+    countRows.reduce((n, c) => n + Math.min(c.done, c.need), 0);
   const allChecked = total > 0 && doneCount >= total;
   const careDone = !!(rec && rec.care && rec.care.done);
 
@@ -148,7 +177,9 @@ function renderCard(r) {
     host.className = "swipe-fg";
     // 地色・左の緑ラインは style.css の .swipe-fg 側
     card.append(bg, host);
-    enableSwipeComplete(card, host, () => dr.setCareDone(STORE_ID, r, currentDate, true).catch(alertErr));
+    enableSwipeComplete(card, host, () =>
+      dr.setCareDone(STORE_ID, r, currentDate, true).catch(alertErr),
+    );
   }
 
   const head = document.createElement("button");
@@ -164,7 +195,10 @@ function renderCard(r) {
   help.setAttribute("role", "button");
   help.setAttribute("aria-label", "この子の予定を見る");
   help.textContent = "?";
-  help.addEventListener("click", (e) => { e.stopPropagation(); openSchedule(r); });
+  help.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openSchedule(r);
+  });
   head.appendChild(help);
 
   const tri = document.createElement("span");
@@ -228,7 +262,10 @@ function renderCard(r) {
     const link = document.createElement("button");
     link.className = "link-btn";
     link.textContent = "項目を編集";
-    link.addEventListener("click", () => { editing.add(r.id); render(); });
+    link.addEventListener("click", () => {
+      editing.add(r.id);
+      render();
+    });
     er.appendChild(link);
     body.appendChild(er);
   } else {
@@ -242,7 +279,10 @@ function renderCard(r) {
     const doneBtn = document.createElement("button");
     doneBtn.className = "small primary";
     doneBtn.textContent = "編集を終える";
-    doneBtn.addEventListener("click", () => { editing.delete(r.id); render(); });
+    doneBtn.addEventListener("click", () => {
+      editing.delete(r.id);
+      render();
+    });
     h.appendChild(doneBtn);
     box.appendChild(h);
 
@@ -262,17 +302,22 @@ function renderCard(r) {
         sel.className = "mini-sel";
         for (let i = 1; i <= 9; i++) {
           const o = document.createElement("option");
-          o.value = String(i); o.textContent = "×" + i;
+          o.value = String(i);
+          o.textContent = "×" + i;
           sel.appendChild(o);
         }
         sel.value = String(it.need || 1);
-        sel.addEventListener("change", () => dr.setCareNeedToday(STORE_ID, r, currentDate, it.id, +sel.value).catch(alertErr));
+        sel.addEventListener("change", () =>
+          dr.setCareNeedToday(STORE_ID, r, currentDate, it.id, +sel.value).catch(alertErr),
+        );
         row.appendChild(sel);
       }
       const del = document.createElement("button");
       del.className = "x-btn";
       del.textContent = "×";
-      del.addEventListener("click", () => dr.removeCareToday(STORE_ID, r, currentDate, it.id, it.countable).catch(alertErr));
+      del.addEventListener("click", () =>
+        dr.removeCareToday(STORE_ID, r, currentDate, it.id, it.countable).catch(alertErr),
+      );
       row.appendChild(del);
       box.appendChild(row);
     });
@@ -285,7 +330,10 @@ function renderCard(r) {
         `<option value="">＋ 項目を追加…</option>` +
         remaining.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
       sel.addEventListener("change", () => {
-        if (sel.value) dr.addCareToday(STORE_ID, r, currentDate, sel.value, countableIds.has(sel.value)).catch(alertErr);
+        if (sel.value)
+          dr.addCareToday(STORE_ID, r, currentDate, sel.value, countableIds.has(sel.value)).catch(
+            alertErr,
+          );
       });
       box.appendChild(sel);
     }
@@ -306,7 +354,9 @@ function renderCard(r) {
     u.type = "button";
     u.className = "undo-btn";
     u.textContent = "実施済みを取消";
-    u.addEventListener("click", () => dr.setCareDone(STORE_ID, r, currentDate, false).catch(alertErr));
+    u.addEventListener("click", () =>
+      dr.setCareDone(STORE_ID, r, currentDate, false).catch(alertErr),
+    );
     const uRow = document.createElement("div");
     uRow.className = "row row-end";
     uRow.appendChild(u);
@@ -315,62 +365,6 @@ function renderCard(r) {
 
   host.appendChild(body);
   return card;
-}
-
-// 左スワイプで onComplete を呼ぶ（LINEのアーカイブ操作のイメージ）
-function enableSwipeComplete(card, fg, onComplete) {
-  const THRESHOLD = 90;
-  let startX = 0, startY = 0, dx = 0, dragging = false, decided = false, horiz = false;
-
-  const snapBack = () => {
-    fg.style.transition = "transform .2s";
-    fg.style.transform = "";
-    fg.style.animation = "";
-    setTimeout(() => { fg.style.transition = ""; }, 200);
-  };
-
-  card.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    startX = e.clientX; startY = e.clientY;
-    dx = 0; dragging = true; decided = false; horiz = false;
-    fg.style.transition = "";
-    fg.style.animation = "none";
-  });
-  card.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const mx = e.clientX - startX, my = e.clientY - startY;
-    if (!decided) {
-      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-      decided = true;
-      horiz = Math.abs(mx) > Math.abs(my);
-      if (horiz) card.setPointerCapture(e.pointerId);
-      else { dragging = false; fg.style.animation = ""; return; }
-    }
-    e.preventDefault();
-    dx = Math.min(0, mx);
-    fg.style.transform = `translateX(${dx}px)`;
-    card.classList.toggle("armed", -dx >= THRESHOLD);
-  });
-  const end = () => {
-    if (!dragging) return;
-    dragging = false;
-    card.classList.remove("armed");
-    if (decided && horiz) {
-      // 直後の click（展開トグル）を無効化
-      const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
-      card.addEventListener("click", swallow, true);
-      setTimeout(() => card.removeEventListener("click", swallow, true), 350);
-    }
-    if (-dx >= THRESHOLD) {
-      fg.style.transition = "transform .18s";
-      fg.style.transform = "translateX(-110%)";
-      setTimeout(onComplete, 160);
-    } else {
-      snapBack();
-    }
-  };
-  card.addEventListener("pointerup", end);
-  card.addEventListener("pointercancel", end);
 }
 
 // ---- 操作ハンドラ ----
@@ -384,14 +378,12 @@ function onSetCareCount(r, itemId, done) {
 
 // 書き込み失敗をスタッフに見せる（共通トースト）。従来は console のみで握りつぶしていた。
 const alertErr = notifyWriteError;
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-}
 
 // ---- 予定オーバーレイ（全体一覧と同じ様式で、その子だけ。ラン担当と共通） ----
 function openSchedule(r) {
   const ov = document.getElementById("sched-overlay");
-  ov.querySelector("#sched-title").textContent = `${r.ownerLastName || ""} ${r.rabbitName || ""} の予定`;
+  ov.querySelector("#sched-title").textContent =
+    `${r.ownerLastName || ""} ${r.rabbitName || ""} の予定`;
   ov.querySelector("#sched-body").innerHTML =
     `<div class="scroll-x">${rabbitScheduleTableHTML(r, { holidays, busyPeriods, countableIds })}</div>`;
   ov.hidden = false;
@@ -403,12 +395,22 @@ document.getElementById("sched-overlay").addEventListener("click", (e) => {
   if (e.target.id === "sched-overlay") closeSchedule();
 });
 document.getElementById("sched-close").addEventListener("click", closeSchedule);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSchedule(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSchedule();
+});
 
 // ---- 起動 ----
 
-document.getElementById("prev-day").addEventListener("click", () => { currentDate = addDays(currentDate, -1); render(); ensureRecords(); });
-document.getElementById("next-day").addEventListener("click", () => { currentDate = addDays(currentDate, 1); render(); ensureRecords(); });
+document.getElementById("prev-day").addEventListener("click", () => {
+  currentDate = addDays(currentDate, -1);
+  render();
+  ensureRecords();
+});
+document.getElementById("next-day").addEventListener("click", () => {
+  currentDate = addDays(currentDate, 1);
+  render();
+  ensureRecords();
+});
 
 requireAuth(() => {
   document.getElementById("store-name").textContent = currentStoreName();
@@ -420,15 +422,15 @@ requireAuth(() => {
     holidays = cfg.holidays;
     busyPeriods = cfg.busyPeriods;
     if (rabbitsStarted) {
-      render();   // 設定変更（ケア項目・定休日）を反映
+      render(); // 設定変更（ケア項目・定休日）を反映
       return;
     }
     rabbitsStarted = true;
     // 宿泊終了ぶんも購読し、過去の日付を開けばその記録が見られるようにする
     db.subscribeAllRabbits(STORE_ID, (list) => {
       rabbits = list;
-      render();          // まず現状を描画
-      ensureRecords();   // 予定の取り込みは裏で（書き込み後に再描画される）
+      render(); // まず現状を描画
+      ensureRecords(); // 予定の取り込みは裏で（書き込み後に再描画される）
     });
   });
 });

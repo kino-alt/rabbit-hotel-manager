@@ -148,11 +148,15 @@ export function careOnDate(rabbit, date, countableIds = new Set()) {
 
   const recPlain = care ? Object.keys(care.items || {}) : [];
   const recCount = care
-    ? Object.entries(care.counts || {}).map(([id, c]) => ({ id, need: c.need || 0, done: c.done || 0 }))
+    ? Object.entries(care.counts || {}).map(([id, c]) => ({
+        id,
+        need: c.need || 0,
+        done: c.done || 0,
+      }))
     : [];
 
   const hasPlan = schedIds.length > 0;
-  const hasRecord = (recPlain.length + recCount.length) > 0;
+  const hasRecord = recPlain.length + recCount.length > 0;
   const done = !!(care && care.done);
   const lineSent = !!(care && care.lineSent);
 
@@ -186,8 +190,8 @@ export function runOnDate(rabbit, date) {
 export function calculatePhotoNeeded(date, careSchedule, runSchedule, holidays, busyPeriods) {
   if (isBusyPeriod(date, busyPeriods)) return false;
   if (isHoliday(date, holidays)) return false;
-  const careCount = (careSchedule && careSchedule[date] ? careSchedule[date].length : 0);
-  const runCount = (runSchedule && runSchedule[date] ? runSchedule[date] : 0);
+  const careCount = careSchedule && careSchedule[date] ? careSchedule[date].length : 0;
+  const runCount = runSchedule && runSchedule[date] ? runSchedule[date] : 0;
   if (careCount > 0) return false;
   if (runCount > 0) return false;
   return true;

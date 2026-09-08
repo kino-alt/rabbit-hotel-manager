@@ -6,7 +6,14 @@
 import { requireAuth } from "./auth.js";
 import * as db from "./db.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
-import { todayMonth, addMonths, formatMonthJP, eachDate, countableIdSet, isStayEnded } from "./schedule.js";
+import {
+  todayMonth,
+  addMonths,
+  formatMonthJP,
+  eachDate,
+  countableIdSet,
+  isStayEnded,
+} from "./schedule.js";
 import { scheduleGridHTML } from "./overviewView.js";
 
 const gridEl = document.getElementById("grid");
@@ -19,7 +26,7 @@ let rabbits = [];
 let holidays = { weekdays: [], dates: [] };
 let busyPeriods = [];
 let countableIds = new Set();
-let currentMonth = todayMonth();   // "YYYY-MM"
+let currentMonth = todayMonth(); // "YYYY-MM"
 
 // その月の初日・末日（"YYYY-MM-DD"）
 function monthRange(mk) {
@@ -36,8 +43,12 @@ function render() {
 
   // 宿泊終了（お迎え日が過ぎた or 明示的に非表示）で、その月に滞在期間が重なるうさぎだけ
   const inMonth = rabbits.filter(
-    (r) => isStayEnded(r) && r.checkInDate && r.checkOutDate
-      && r.checkInDate <= last && r.checkOutDate >= first,
+    (r) =>
+      isStayEnded(r) &&
+      r.checkInDate &&
+      r.checkOutDate &&
+      r.checkInDate <= last &&
+      r.checkOutDate >= first,
   );
 
   emptyEl.hidden = inMonth.length > 0;
@@ -51,7 +62,10 @@ function render() {
 
   const dates = eachDate(first, last);
   gridEl.innerHTML = scheduleGridHTML(
-    inMonth, dates, { holidays, busyPeriods, countableIds }, { nameLink: false },
+    inMonth,
+    dates,
+    { holidays, busyPeriods, countableIds },
+    { nameLink: false },
   );
 }
 

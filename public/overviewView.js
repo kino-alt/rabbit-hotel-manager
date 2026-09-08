@@ -3,15 +3,20 @@
 import * as db from "./db.js";
 import { STORE_ID } from "./firebase-config.js";
 import {
-  todayISO, addDays, eachDate, dayWd, calculatePhotoNeeded, isBusyPeriod, isHoliday, countableIdSet,
-  careOnDate, runOnDate,
+  todayISO,
+  addDays,
+  eachDate,
+  dayWd,
+  calculatePhotoNeeded,
+  isBusyPeriod,
+  isHoliday,
+  countableIdSet,
+  careOnDate,
+  runOnDate,
 } from "./schedule.js";
+import { esc } from "./esc.js";
 
-const SPAN = 7;            // 本日から1週間
-
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-}
+const SPAN = 7; // 本日から1週間
 
 function shortDate(iso) {
   const { day, wd } = dayWd(iso);
@@ -35,10 +40,10 @@ function getCellStatus(rabbit, date, type, holidays, busyPeriods, countableIds) 
 
   if (type === "care") {
     const c = careOnDate(rabbit, date, countableIds);
-    if (isFuture) return c.hasPlan ? "〇" : "";   // 未来日は予定だけを見る
+    if (isFuture) return c.hasPlan ? "〇" : ""; // 未来日は予定だけを見る
     if (!c.exists) return "";
     if (c.lineSent) return "●";
-    if (c.done) return "◐";                       // 「ケア完了」ボタンが押されたとき
+    if (c.done) return "◐"; // 「ケア完了」ボタンが押されたとき
     return "〇";
   }
 
@@ -59,7 +64,14 @@ function getCellStatus(rabbit, date, type, holidays, busyPeriods, countableIds) 
   let needed;
   if (ps === "needed") needed = true;
   else if (ps === "not_needed") needed = false;
-  else needed = calculatePhotoNeeded(date, rabbit.careSchedule, rabbit.runSchedule, holidays, busyPeriods);
+  else
+    needed = calculatePhotoNeeded(
+      date,
+      rabbit.careSchedule,
+      rabbit.runSchedule,
+      holidays,
+      busyPeriods,
+    );
   return needed ? "〇" : "";
 }
 
@@ -68,7 +80,7 @@ function getCellStatus(rabbit, date, type, holidays, busyPeriods, countableIds) 
 export function rabbitScheduleTableHTML(r, ctx) {
   const { holidays, busyPeriods, countableIds } = ctx;
   const today = todayISO();
-  const dates = (r.checkInDate && r.checkOutDate) ? eachDate(r.checkInDate, r.checkOutDate) : [];
+  const dates = r.checkInDate && r.checkOutDate ? eachDate(r.checkInDate, r.checkOutDate) : [];
 
   let html = "<table class='overview compact single'><thead><tr><th class='kind'></th>";
   for (const d of dates) {
@@ -77,9 +89,12 @@ export function rabbitScheduleTableHTML(r, ctx) {
   }
   html += "</tr></thead><tbody>";
   for (const type of ["care", "run", "photo"]) {
-    html += `<tr><td class="kind">${({ care: "ケア", run: "ラン", photo: "写真" })[type]}</td>`;
+    html += `<tr><td class="kind">${{ care: "ケア", run: "ラン", photo: "写真" }[type]}</td>`;
     for (const d of dates) {
-      const cls = "dcol in-stay" + (isHoliday(d, holidays) ? " col-holiday" : "") + (d === today ? " today" : "");
+      const cls =
+        "dcol in-stay" +
+        (isHoliday(d, holidays) ? " col-holiday" : "") +
+        (d === today ? " today" : "");
       html += `<td class="${cls}">${getCellStatus(r, d, type, holidays, busyPeriods, countableIds)}</td>`;
     }
     html += "</tr>";
@@ -99,8 +114,8 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
     hol: isHoliday(d, holidays) ? " col-holiday" : "",
     today: d === today ? " today" : "",
   }));
-  const sorted = [...rabbits].sort(
-    (a, b) => (a.ownerLastName || "").localeCompare(b.ownerLastName || "", "ja"),
+  const sorted = [...rabbits].sort((a, b) =>
+    (a.ownerLastName || "").localeCompare(b.ownerLastName || "", "ja"),
   );
 
   let html = "<thead><tr><th class='rabbit-name'>うさぎ</th><th class='kind'></th>";
@@ -110,7 +125,8 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
   sorted.forEach((r, i) => {
     const name = esc(`${r.ownerLastName || ""} ${r.rabbitName || ""}`);
     // 次のうさぎが別の飼い主なら、このうさぎの下を2重線で区切る
-    const nextSame = sorted[i + 1] && (sorted[i + 1].ownerLastName || "") === (r.ownerLastName || "");
+    const nextSame =
+      sorted[i + 1] && (sorted[i + 1].ownerLastName || "") === (r.ownerLastName || "");
     const grpEnd = i < sorted.length - 1 && !nextSame;
 
     ["care", "run", "photo"].forEach((type, ri) => {
@@ -119,7 +135,7 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
         const inner = opts.nameLink ? `<a href="#" data-rabbit="${esc(r.id)}">${name}</a>` : name;
         html += `<td class='rabbit-name${grpEnd ? " grp-end" : ""}' rowspan='3'>${inner}</td>`;
       }
-      html += `<td class="kind">${({ care: "ケア", run: "ラン", photo: "写真" })[type]}</td>`;
+      html += `<td class="kind">${{ care: "ケア", run: "ラン", photo: "写真" }[type]}</td>`;
       for (const m of meta) {
         const inStay = r.checkInDate <= m.d && m.d <= r.checkOutDate;
         const cls = "dcol" + m.hol + (inStay ? " in-stay" : "") + m.today;
@@ -136,9 +152,13 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
 // うさぎ名クリックで register.html?id=... へ飛べるようにする（onRabbitClick 省略時は編集画面へ）
 export function initOverview(elements, onRabbitClick) {
   const { table, rangeLabel, prev, next } = elements;
-  const goRabbit = onRabbitClick || ((id) => { location.href = `register.html?id=${encodeURIComponent(id)}`; });
+  const goRabbit =
+    onRabbitClick ||
+    ((id) => {
+      location.href = `register.html?id=${encodeURIComponent(id)}`;
+    });
 
-  let startDate = todayISO();   // 本日から
+  let startDate = todayISO(); // 本日から
   let rabbits = [];
   let holidays = { weekdays: [], dates: [] };
   let busyPeriods = [];
@@ -164,19 +184,36 @@ export function initOverview(elements, onRabbitClick) {
     const visible = rabbits.filter((r) => r.checkInDate <= last && r.checkOutDate >= dates[0]);
 
     if (visible.length === 0) {
-      table.innerHTML = "<tbody><tr><td class='muted' style='padding:12px'>この期間の宿泊はありません</td></tr></tbody>";
+      table.innerHTML =
+        "<tbody><tr><td class='muted' style='padding:12px'>この期間の宿泊はありません</td></tr></tbody>";
       return;
     }
 
-    table.innerHTML = scheduleGridHTML(visible, dates, { holidays, busyPeriods, countableIds }, { nameLink: true });
+    table.innerHTML = scheduleGridHTML(
+      visible,
+      dates,
+      { holidays, busyPeriods, countableIds },
+      { nameLink: true },
+    );
 
     table.querySelectorAll("a[data-rabbit]").forEach((a) => {
-      a.addEventListener("click", (e) => { e.preventDefault(); goRabbit(a.dataset.rabbit); });
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        goRabbit(a.dataset.rabbit);
+      });
     });
   }
 
-  if (prev) prev.addEventListener("click", () => { startDate = addDays(startDate, -SPAN); render(); });
-  if (next) next.addEventListener("click", () => { startDate = addDays(startDate, SPAN); render(); });
+  if (prev)
+    prev.addEventListener("click", () => {
+      startDate = addDays(startDate, -SPAN);
+      render();
+    });
+  if (next)
+    next.addEventListener("click", () => {
+      startDate = addDays(startDate, SPAN);
+      render();
+    });
 
   let rabbitsUnsub = null;
   const storeUnsub = db.subscribeStoreConfig(STORE_ID, (cfg) => {
@@ -184,7 +221,7 @@ export function initOverview(elements, onRabbitClick) {
     busyPeriods = cfg.busyPeriods;
     countableIds = countableIdSet(cfg.careItemsMaster);
     if (rabbitsUnsub) {
-      render();   // 設定変更（定休日・ケア項目）を反映
+      render(); // 設定変更（定休日・ケア項目）を反映
     } else {
       rabbitsUnsub = db.subscribeActiveRabbits(STORE_ID, (list) => {
         rabbits = list;
@@ -192,5 +229,8 @@ export function initOverview(elements, onRabbitClick) {
       });
     }
   });
-  return () => { storeUnsub(); if (rabbitsUnsub) rabbitsUnsub(); };
+  return () => {
+    storeUnsub();
+    if (rabbitsUnsub) rabbitsUnsub();
+  };
 }

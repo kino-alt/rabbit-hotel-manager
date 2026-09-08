@@ -48,7 +48,9 @@ export function entryToSchedules(e) {
   const careCounts = {};
   Object.entries(e.brushByDay).forEach(([d, day]) => {
     const dd = {};
-    Object.entries(day).forEach(([id, n]) => { if (n > 0) dd[id] = n; });
+    Object.entries(day).forEach(([id, n]) => {
+      if (n > 0) dd[id] = n;
+    });
     if (Object.keys(dd).length) careCounts[d] = dd;
   });
 
@@ -76,19 +78,25 @@ export function buildEntry(shared, card, prev, ctx) {
     if (!careDays.length) careDays = [dd];
     itemDay = {};
     normalIds.forEach((id) => {
-      itemDay[id] = (prev.itemDay[id] && careDays.includes(prev.itemDay[id])) ? prev.itemDay[id] : careDays[0];
+      itemDay[id] =
+        prev.itemDay[id] && careDays.includes(prev.itemDay[id]) ? prev.itemDay[id] : careDays[0];
     });
     brushByDay = {};
     careDays.forEach((d) => {
       const day = {};
-      brushIds.forEach((id) => { const n = (prev.brushByDay[d] || {})[id] || 0; if (n) day[id] = n; });
+      brushIds.forEach((id) => {
+        const n = (prev.brushByDay[d] || {})[id] || 0;
+        if (n) day[id] = n;
+      });
       if (Object.keys(day).length) brushByDay[d] = day;
     });
     runByDay = { ...prev.runByDay };
   } else if (prevRabbit) {
     const cs = prevRabbit.careSchedule || {};
     const cc = prevRabbit.careCounts || {};
-    careDays = Object.keys(cs).filter((d) => (cs[d] || []).length).sort();
+    careDays = Object.keys(cs)
+      .filter((d) => (cs[d] || []).length)
+      .sort();
     if (!careDays.length) careDays = [dd];
     itemDay = {};
     normalIds.forEach((id) => {
@@ -107,7 +115,9 @@ export function buildEntry(shared, card, prev, ctx) {
   } else {
     careDays = [dd];
     itemDay = {};
-    normalIds.forEach((id) => { itemDay[id] = dd; });
+    normalIds.forEach((id) => {
+      itemDay[id] = dd;
+    });
     brushByDay = {};
     runByDay = {};
   }
@@ -118,7 +128,9 @@ export function buildEntry(shared, card, prev, ctx) {
     const want = (card.brushCounts && card.brushCounts[id]) || 1;
     const have = careDays.reduce((n, d) => n + ((brushByDay[d] || {})[id] || 0), 0);
     if (have !== want) {
-      careDays.forEach((d) => { if (brushByDay[d]) delete brushByDay[d][id]; });
+      careDays.forEach((d) => {
+        if (brushByDay[d]) delete brushByDay[d][id];
+      });
       const t = careDays[0];
       brushByDay[t] = brushByDay[t] || {};
       brushByDay[t][id] = want;

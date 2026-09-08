@@ -9,11 +9,15 @@ import * as db from "./db.js";
 import * as dr from "./dailyRecord.js";
 import { STORE_ID } from "./firebase-config.js";
 import {
-  eachDate, dayWd, isHoliday, calculatePhotoNeeded, todayISO, countableIdSet,
+  eachDate,
+  dayWd,
+  isHoliday,
+  calculatePhotoNeeded,
+  todayISO,
+  countableIdSet,
 } from "./schedule.js";
-import {
-  buildEntry, entryToSchedules, careScheduleShape, careUnitsOnDay,
-} from "./scheduleGrid.js";
+import { buildEntry, entryToSchedules, careScheduleShape, careUnitsOnDay } from "./scheduleGrid.js";
+import { esc } from "./esc.js";
 
 const F = (id) => document.getElementById(id);
 const form = F("rabbit-form");
@@ -26,11 +30,11 @@ let countableIds = new Set();
 let holidays = { weekdays: [], dates: [] };
 let busyPeriods = [];
 let groupId = null;
-let loadedRabbit = null;         // 常に最新のサーバ状態（購読で更新）
-let loaded = false;              // 店舗設定（ケア項目など）の読み込み完了フラグ
-let baseSchedules = null;        // STEP2 に入った時点の予定（保存時の差分マージの基準）
-let justSavedUntil = 0;          // 自分の保存のエコーで「他端末で更新」通知を出さない猶予
-let gridDirty = false;           // STEP2 グリッドを利用者が触ったか（他端末の更新の扱いを変える）
+let loadedRabbit = null; // 常に最新のサーバ状態（購読で更新）
+let loaded = false; // 店舗設定（ケア項目など）の読み込み完了フラグ
+let baseSchedules = null; // STEP2 に入った時点の予定（保存時の差分マージの基準）
+let justSavedUntil = 0; // 自分の保存のエコーで「他端末で更新」通知を出さない猶予
+let gridDirty = false; // STEP2 グリッドを利用者が触ったか（他端末の更新の扱いを変える）
 
 // STEP2 の作業状態
 let stayDates = [];
@@ -39,10 +43,13 @@ let stayDates = [];
 let entries = [];
 
 // ---- helpers ----
-function showError(el, t) { el.className = "msg error"; el.textContent = t; }
-function showInfo(el, t) { el.className = "msg info"; el.textContent = t; }
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function showError(el, t) {
+  el.className = "msg error";
+  el.textContent = t;
+}
+function showInfo(el, t) {
+  el.className = "msg info";
+  el.textContent = t;
 }
 function newGroupId() {
   return "g_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
@@ -74,7 +81,8 @@ function renderCareChecks(container, checkedIds, counts) {
     return;
   }
   if (careMaster.length === 0) {
-    container.innerHTML = "<span class='muted' style='font-size:13px'>ケア項目が未登録です（設定画面で追加してください）</span>";
+    container.innerHTML =
+      "<span class='muted' style='font-size:13px'>ケア項目が未登録です（設定画面で追加してください）</span>";
     return;
   }
   careMaster.forEach((m) => {
@@ -102,7 +110,9 @@ function renderCareChecks(container, checkedIds, counts) {
         sel.appendChild(o);
       }
       sel.value = String((counts && counts[m.id]) || 1);
-      const sync = () => { sel.hidden = !cb.checked; };
+      const sync = () => {
+        sel.hidden = !cb.checked;
+      };
       cb.addEventListener("change", sync);
       pick.appendChild(sel);
       sync();
@@ -154,7 +164,7 @@ function addCard(data) {
   renderCareChecks(
     card.querySelector(".r-care"),
     (data && data.careIds) || defaultCareIds(),
-    data && data.brushCounts
+    data && data.brushCounts,
   );
 
   card.querySelector(".r-name").addEventListener("input", refreshCardChrome);
@@ -168,10 +178,13 @@ function addCard(data) {
 
 function readCards() {
   return [...F("rabbit-cards").querySelectorAll("[data-card]")].map((c) => {
-    const careIds = [...c.querySelectorAll(".r-care input[type=checkbox]:checked")].map((x) => x.value);
+    const careIds = [...c.querySelectorAll(".r-care input[type=checkbox]:checked")].map(
+      (x) => x.value,
+    );
     const brushCounts = {};
     c.querySelectorAll(".r-care .brush-n").forEach((sel) => {
-      if (careIds.includes(sel.dataset.id)) brushCounts[sel.dataset.id] = Math.max(1, +sel.value || 1);
+      if (careIds.includes(sel.dataset.id))
+        brushCounts[sel.dataset.id] = Math.max(1, +sel.value || 1);
     });
     return {
       rabbitName: c.querySelector(".r-name").value.trim(),
@@ -274,12 +287,15 @@ function touchGrid() {
 }
 function addCareDay(ei, d) {
   const e = entries[ei];
-  if (!e.careDays.includes(d)) { e.careDays.push(d); e.careDays.sort(); }
+  if (!e.careDays.includes(d)) {
+    e.careDays.push(d);
+    e.careDays.sort();
+  }
   touchGrid();
 }
 function removeCareDay(ei, d) {
   const e = entries[ei];
-  if (careUnitsOnDay(e, d) > 0) return;   // 中身があれば消さない
+  if (careUnitsOnDay(e, d) > 0) return; // 中身があれば消さない
   e.careDays = e.careDays.filter((x) => x !== d);
   delete e.brushByDay[d];
   touchGrid();
@@ -295,7 +311,8 @@ function bumpBrush(ei, day, id, dir) {
   const get = (d) => (e.brushByDay[d] || {})[id] || 0;
   const set = (d, n) => {
     const bd = { ...(e.brushByDay[d] || {}) };
-    if (n <= 0) delete bd[id]; else bd[id] = n;
+    if (n <= 0) delete bd[id];
+    else bd[id] = n;
     if (Object.keys(bd).length) e.brushByDay[d] = bd;
     else delete e.brushByDay[d];
   };
@@ -324,7 +341,8 @@ function setRun(ei, day, n) {
 }
 function runOptions(sel) {
   let o = "";
-  for (let i = 0; i <= 9; i++) o += `<option value="${i}"${i === sel ? " selected" : ""}>${i === 0 ? "−" : i}</option>`;
+  for (let i = 0; i <= 9; i++)
+    o += `<option value="${i}"${i === sel ? " selected" : ""}>${i === 0 ? "−" : i}</option>`;
   return o;
 }
 
@@ -336,9 +354,15 @@ function renderStep2() {
     const { day, wd } = dayWd(d);
     return { d, day, wd, hol: isHoliday(d, holidays), today: d === today };
   });
-  const headRow = "<tr><th class='kind'></th>"
-    + cols.map((c) => `<th class="dcol${c.hol ? " col-holiday" : ""}${c.today ? " today" : ""}">${c.day}<span class="wd">${c.wd}</span></th>`).join("")
-    + "</tr>";
+  const headRow =
+    "<tr><th class='kind'></th>" +
+    cols
+      .map(
+        (c) =>
+          `<th class="dcol${c.hol ? " col-holiday" : ""}${c.today ? " today" : ""}">${c.day}<span class="wd">${c.wd}</span></th>`,
+      )
+      .join("") +
+    "</tr>";
 
   let html = "";
   entries.forEach((e, ei) => {
@@ -349,43 +373,58 @@ function renderStep2() {
 
     // ケア行
     html += `<tr><td class="kind">ケア</td>`;
-    html += cols.map((c) => {
-      const inCare = e.careDays.includes(c.d);
-      const units = inCare ? careUnitsOnDay(e, c.d) : 0;
-      if (c.hol) return `<td class="dcol cell-off">${units || ""}</td>`;
-      if (!inCare) return `<td class="dcol cell-care" data-addday data-e="${ei}" data-d="${c.d}">＋</td>`;
-      if (units === 0) return `<td class="dcol cell-care cell-empty" data-rmday data-e="${ei}" data-d="${c.d}" title="タップで取り消し">–</td>`;
-      return `<td class="dcol cell-care on">✓${units > 1 ? units : ""}</td>`;
-    }).join("");
+    html += cols
+      .map((c) => {
+        const inCare = e.careDays.includes(c.d);
+        const units = inCare ? careUnitsOnDay(e, c.d) : 0;
+        if (c.hol) return `<td class="dcol cell-off">${units || ""}</td>`;
+        if (!inCare)
+          return `<td class="dcol cell-care" data-addday data-e="${ei}" data-d="${c.d}">＋</td>`;
+        if (units === 0)
+          return `<td class="dcol cell-care cell-empty" data-rmday data-e="${ei}" data-d="${c.d}" title="タップで取り消し">–</td>`;
+        return `<td class="dcol cell-care on">✓${units > 1 ? units : ""}</td>`;
+      })
+      .join("");
     html += "</tr>";
 
     // ラン行
     html += `<tr><td class="kind">ラン</td>`;
-    html += cols.map((c) => {
-      const n = e.runByDay[c.d] || 0;
-      if (c.hol) return `<td class="dcol cell-off">${n || ""}</td>`;
-      return `<td class="dcol${n > 0 ? " cell-run on" : ""}"><select class="run-sel" data-e="${ei}" data-d="${c.d}">${runOptions(n)}</select></td>`;
-    }).join("");
+    html += cols
+      .map((c) => {
+        const n = e.runByDay[c.d] || 0;
+        if (c.hol) return `<td class="dcol cell-off">${n || ""}</td>`;
+        return `<td class="dcol${n > 0 ? " cell-run on" : ""}"><select class="run-sel" data-e="${ei}" data-d="${c.d}">${runOptions(n)}</select></td>`;
+      })
+      .join("");
     html += "</tr>";
 
     // 写真行（自動判定・読み取り専用）
     html += `<tr><td class="kind">写真</td>`;
-    html += cols.map((c) => {
-      const need = calculatePhotoNeeded(c.d, shape, e.runByDay, holidays, busyPeriods);
-      return `<td class="dcol cell-photo">${need ? "〇" : ""}</td>`;
-    }).join("");
+    html += cols
+      .map((c) => {
+        const need = calculatePhotoNeeded(c.d, shape, e.runByDay, holidays, busyPeriods);
+        return `<td class="dcol cell-photo">${need ? "〇" : ""}</td>`;
+      })
+      .join("");
     html += "</tr>";
 
     html += "</tbody></table></div>";
   });
   wrap.innerHTML = html;
 
-  wrap.querySelectorAll("[data-addday]").forEach((el) =>
-    el.addEventListener("click", () => addCareDay(+el.dataset.e, el.dataset.d)));
-  wrap.querySelectorAll("[data-rmday]").forEach((el) =>
-    el.addEventListener("click", () => removeCareDay(+el.dataset.e, el.dataset.d)));
-  wrap.querySelectorAll("select.run-sel").forEach((el) =>
-    el.addEventListener("change", () => setRun(+el.dataset.e, el.dataset.d, +el.value)));
+  wrap
+    .querySelectorAll("[data-addday]")
+    .forEach((el) => el.addEventListener("click", () => addCareDay(+el.dataset.e, el.dataset.d)));
+  wrap
+    .querySelectorAll("[data-rmday]")
+    .forEach((el) =>
+      el.addEventListener("click", () => removeCareDay(+el.dataset.e, el.dataset.d)),
+    );
+  wrap
+    .querySelectorAll("select.run-sel")
+    .forEach((el) =>
+      el.addEventListener("change", () => setRun(+el.dataset.e, el.dataset.d, +el.value)),
+    );
 
   renderCareBreakdown();
 }
@@ -405,44 +444,66 @@ function renderCareBreakdown() {
     if (entries.length > 1) h += `<div class="bd-rabbit">${esc(e.name)}</div>`;
 
     e.normalIds.forEach((id) => {
-      const chips = days.map((d) => {
-        const { day, wd } = dayWd(d);
-        const on = e.itemDay[id] === d;
-        return `<label class="daychip${on ? " on" : ""}">`
-          + `<input type="radio" name="bd-${ei}-${esc(id)}" data-move data-e="${ei}" data-id="${esc(id)}" data-d="${d}"${on ? " checked" : ""}>`
-          + `${day}(${wd})</label>`;
-      }).join("");
+      const chips = days
+        .map((d) => {
+          const { day, wd } = dayWd(d);
+          const on = e.itemDay[id] === d;
+          return (
+            `<label class="daychip${on ? " on" : ""}">` +
+            `<input type="radio" name="bd-${ei}-${esc(id)}" data-move data-e="${ei}" data-id="${esc(id)}" data-d="${d}"${on ? " checked" : ""}>` +
+            `${day}(${wd})</label>`
+          );
+        })
+        .join("");
       h += `<div class="bd-item"><div class="bd-name">${esc(careItemName(id))}</div><div class="bd-days">${chips}</div></div>`;
     });
 
     e.brushIds.forEach((id) => {
       const totalN = days.reduce((n, d) => n + ((e.brushByDay[d] || {})[id] || 0), 0);
-      const pairs = days.map((d) => {
-        const { day, wd } = dayWd(d);
-        const n = (e.brushByDay[d] || {})[id] || 0;
-        return `<span class="bd-cpair"><span class="bd-cd">${day}(${wd})</span>`
-          + `<span class="runctl sm">`
-          + `<button type="button" data-bdec data-e="${ei}" data-d="${d}" data-id="${esc(id)}">−</button>`
-          + `<b>${n}</b>`
-          + `<button type="button" data-binc data-e="${ei}" data-d="${d}" data-id="${esc(id)}">＋</button>`
-          + `</span></span>`;
-      }).join("");
+      const pairs = days
+        .map((d) => {
+          const { day, wd } = dayWd(d);
+          const n = (e.brushByDay[d] || {})[id] || 0;
+          return (
+            `<span class="bd-cpair"><span class="bd-cd">${day}(${wd})</span>` +
+            `<span class="runctl sm">` +
+            `<button type="button" data-bdec data-e="${ei}" data-d="${d}" data-id="${esc(id)}">−</button>` +
+            `<b>${n}</b>` +
+            `<button type="button" data-binc data-e="${ei}" data-d="${d}" data-id="${esc(id)}">＋</button>` +
+            `</span></span>`
+          );
+        })
+        .join("");
       h += `<div class="bd-item"><div class="bd-name">${esc(careItemName(id))}<span class="muted"> 全${totalN}回</span></div><div class="bd-cline">${pairs}</div></div>`;
     });
 
     blocks.push(h);
   });
 
-  if (blocks.length === 0) { wrap.hidden = true; wrap.innerHTML = ""; return; }
+  if (blocks.length === 0) {
+    wrap.hidden = true;
+    wrap.innerHTML = "";
+    return;
+  }
   wrap.hidden = false;
-  wrap.innerHTML = '<div class="bd-head">補足：ケアが複数日にあるとき、どの日にやるか</div>' + blocks.join("");
+  wrap.innerHTML =
+    '<div class="bd-head">補足：ケアが複数日にあるとき、どの日にやるか</div>' + blocks.join("");
 
   wrap.querySelectorAll("input[data-move]").forEach((r) =>
-    r.addEventListener("change", () => { if (r.checked) moveItem(+r.dataset.e, r.dataset.id, r.dataset.d); }));
-  wrap.querySelectorAll("button[data-binc]").forEach((b) =>
-    b.addEventListener("click", () => bumpBrush(+b.dataset.e, b.dataset.d, b.dataset.id, +1)));
-  wrap.querySelectorAll("button[data-bdec]").forEach((b) =>
-    b.addEventListener("click", () => bumpBrush(+b.dataset.e, b.dataset.d, b.dataset.id, -1)));
+    r.addEventListener("change", () => {
+      if (r.checked) moveItem(+r.dataset.e, r.dataset.id, r.dataset.d);
+    }),
+  );
+  wrap
+    .querySelectorAll("button[data-binc]")
+    .forEach((b) =>
+      b.addEventListener("click", () => bumpBrush(+b.dataset.e, b.dataset.d, b.dataset.id, +1)),
+    );
+  wrap
+    .querySelectorAll("button[data-bdec]")
+    .forEach((b) =>
+      b.addEventListener("click", () => bumpBrush(+b.dataset.e, b.dataset.d, b.dataset.id, -1)),
+    );
 }
 
 // ---- 保存 ----
@@ -454,15 +515,29 @@ async function onSave() {
 
     if (editId) {
       const e = entries[0];
-      const data = { ...shared, rabbitName: e.card.rabbitName, isFirstTime: e.card.isFirstTime, note: e.card.note };
+      const data = {
+        ...shared,
+        rabbitName: e.card.rabbitName,
+        isFirstTime: e.card.isFirstTime,
+        note: e.card.note,
+      };
       const next = entryToSchedules(e);
-      justSavedUntil = Date.now() + 8000;   // これから来る自分の書き込み群のエコーを無視
+      justSavedUntil = Date.now() + 8000; // これから来る自分の書き込み群のエコーを無視
       await db.saveRabbit(STORE_ID, { id: editId, ...data });
-      const changedPaths = await db.writeSchedulesMerge(STORE_ID, editId, baseSchedules || {}, next);
+      const changedPaths = await db.writeSchedulesMerge(
+        STORE_ID,
+        editId,
+        baseSchedules || {},
+        next,
+      );
       // 楽観更新（購読でもすぐ上書きされる）。次の保存の基準もここに合わせる
       loadedRabbit = { ...loadedRabbit, ...data, ...next };
-      baseSchedules = { careSchedule: next.careSchedule, careCounts: next.careCounts, runSchedule: next.runSchedule };
-      gridDirty = false;                 // 保存済み ＝ グリッドは基準と一致
+      baseSchedules = {
+        careSchedule: next.careSchedule,
+        careCounts: next.careCounts,
+        runSchedule: next.runSchedule,
+      };
+      gridDirty = false; // 保存済み ＝ グリッドは基準と一致
       F("remote-change").hidden = true;
 
       // 予定を変えた日に既存の当日記録があれば、新しい予定に合わせる
@@ -504,7 +579,8 @@ function showDone(shared, list) {
   F("schedule-step").hidden = true;
   F("done-actions").hidden = false;
   const names = list.map((e) => e.card.rabbitName).join("、");
-  F("done-message").textContent = `${shared.ownerLastName} さんの ${list.length}匹（${names}）を登録しました。`;
+  F("done-message").textContent =
+    `${shared.ownerLastName} さんの ${list.length}匹（${names}）を登録しました。`;
 }
 
 function onAddAnother() {
@@ -531,23 +607,29 @@ async function onHideRabbit() {
 
 // 編集中に他端末でこのうさぎが更新されたとき（購読コールバックから）
 function onRemoteRabbitChange() {
-  if (Date.now() <= justSavedUntil) return;   // 自分の保存のエコー
-  if (F("schedule-step").hidden) return;       // STEP1 表示中：goStep2 で最新から作り直される
+  if (Date.now() <= justSavedUntil) return; // 自分の保存のエコー
+  if (F("schedule-step").hidden) return; // STEP1 表示中：goStep2 で最新から作り直される
   if (!gridDirty) {
-    rebuildGridEntries(false);                 // 未編集：静かに最新へ（作業ロスなし）
+    rebuildGridEntries(false); // 未編集：静かに最新へ（作業ロスなし）
     return;
   }
-  F("remote-change").hidden = false;           // 編集中：通知＋「作り直す」ボタン
+  F("remote-change").hidden = false; // 編集中：通知＋「作り直す」ボタン
 }
 
 // ---- 起動 ----
-form.addEventListener("submit", (e) => { e.preventDefault(); goStep2(); });
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  goStep2();
+});
 F("add-rabbit-card").addEventListener("click", () => addCard());
 F("back-btn").addEventListener("click", backToStep1);
 F("save-btn").addEventListener("click", onSave);
 F("add-another").addEventListener("click", onAddAnother);
 F("hide-btn").addEventListener("click", onHideRabbit);
-F("remote-reload").addEventListener("click", () => { rebuildGridEntries(false); gridDirty = false; });
+F("remote-reload").addEventListener("click", () => {
+  rebuildGridEntries(false);
+  gridDirty = false;
+});
 
 // 新規登録は1羽めのカードを最初から表示し、お預かり日を今日にしておく
 if (!editId) {
@@ -590,11 +672,14 @@ requireAuth(async () => {
 
       const used = new Set();
       Object.values(rabbit.careSchedule || {}).forEach((arr) =>
-        (arr || []).forEach((id) => used.add(id)));
+        (arr || []).forEach((id) => used.add(id)),
+      );
       // 回数式項目の初期回数：careCounts の各日を合計
       const brushCounts = {};
       Object.values(rabbit.careCounts || {}).forEach((day) => {
-        Object.entries(day || {}).forEach(([id, n]) => { brushCounts[id] = (brushCounts[id] || 0) + n; });
+        Object.entries(day || {}).forEach(([id, n]) => {
+          brushCounts[id] = (brushCounts[id] || 0) + n;
+        });
       });
       addCard({
         rabbitName: rabbit.rabbitName,
@@ -606,7 +691,8 @@ requireAuth(async () => {
     });
   } else {
     // すでに表示済みの1羽めカードのケア項目を、読み込んだ内容で埋め直す
-    F("rabbit-cards").querySelectorAll("[data-card]").forEach((c) =>
-      renderCareChecks(c.querySelector(".r-care"), defaultCareIds()));
+    F("rabbit-cards")
+      .querySelectorAll("[data-card]")
+      .forEach((c) => renderCareChecks(c.querySelector(".r-care"), defaultCareIds()));
   }
 });

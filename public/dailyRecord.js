@@ -17,7 +17,14 @@ function emptyRecord() {
 
 // その日の記録が無ければ careSchedule / runSchedule / photoSchedule からコピーして新規作成。
 // 既にあれば何もしない（＝複数スタッフの同時アクセスに安全）。
-export async function getOrCreateDailyRecord(storeId, rabbit, date, holidays, busyPeriods = [], countableIds = new Set()) {
+export async function getOrCreateDailyRecord(
+  storeId,
+  rabbit,
+  date,
+  holidays,
+  busyPeriods = [],
+  countableIds = new Set(),
+) {
   const existing = rabbit.dailyRecords && rabbit.dailyRecords[date];
   if (existing) {
     const patch = {};
@@ -36,7 +43,11 @@ export async function getOrCreateDailyRecord(storeId, rabbit, date, holidays, bu
     // 登録画面であとからケア日・ケア項目を足した場合に、
     // まだ記録に無い予定ぶんを取り込む（実施済みの記録は保持。削除はしない）
     const care = existing.care || { items: {}, counts: {} };
-    const { items, counts, changed: careChanged } = reconcileCare(
+    const {
+      items,
+      counts,
+      changed: careChanged,
+    } = reconcileCare(
       care,
       (rabbit.careSchedule && rabbit.careSchedule[date]) || [],
       (rabbit.careCounts && rabbit.careCounts[date]) || {},
@@ -68,10 +79,18 @@ export async function getOrCreateDailyRecord(storeId, rabbit, date, holidays, bu
 
   let photoNeeded;
   const ps = rabbit.photoSchedule && rabbit.photoSchedule[date];
-  if (isBusyPeriod(date, busyPeriods)) photoNeeded = false; // 繁忙期は写真不要
+  if (isBusyPeriod(date, busyPeriods))
+    photoNeeded = false; // 繁忙期は写真不要
   else if (ps === "needed") photoNeeded = true;
   else if (ps === "not_needed") photoNeeded = false;
-  else photoNeeded = calculatePhotoNeeded(date, rabbit.careSchedule, rabbit.runSchedule, holidays, busyPeriods);
+  else
+    photoNeeded = calculatePhotoNeeded(
+      date,
+      rabbit.careSchedule,
+      rabbit.runSchedule,
+      holidays,
+      busyPeriods,
+    );
 
   const record = {
     care: { items, counts, allDone: computeAllDone(items, counts), done: false, lineSent: false },
@@ -129,12 +148,6 @@ export async function updateCareItem(storeId, rabbit, date, itemId, done) {
   const allDone = computeAllDone(items, rec.care.counts);
 
   await db.writeDailyRecord(storeId, rabbit.id, date, { care: { items, allDone } });
-
-  const was = rec.care.items && rec.care.items[itemId] === true;
-  let delta = 0;
-  if (done && !was) delta = 1;
-  else if (!done && was) delta = -1;
-  if (delta) await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: delta });
 }
 
 // 回数式ケア項目の実施回数を設定する（done は新しい実施回数 0..need）
@@ -150,7 +163,6 @@ export async function setCareCount(storeId, rabbit, date, itemId, done) {
   await db.writeDailyRecord(storeId, rabbit.id, date, {
     care: { counts: { [itemId]: counts[itemId] }, allDone },
   });
-  await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: delta });
 }
 
 // その日だけケア項目を追加する（careScheduleマスタは変更しない）
@@ -160,7 +172,10 @@ export async function addCareItemForToday(storeId, rabbit, date, itemId, countab
     if (rec.care.counts && itemId in rec.care.counts) return;
     const counts = { ...(rec.care.counts || {}), [itemId]: { need: 1, done: 0 } };
     await db.writeDailyRecord(storeId, rabbit.id, date, {
-      care: { counts: { [itemId]: counts[itemId] }, allDone: computeAllDone(rec.care.items, counts) },
+      care: {
+        counts: { [itemId]: counts[itemId] },
+        allDone: computeAllDone(rec.care.items, counts),
+      },
     });
     return;
   }
@@ -176,27 +191,21 @@ export async function removeCareItemForToday(storeId, rabbit, date, itemId, coun
   const rec = recordOf(rabbit, date);
 
   if (countable) {
-    const cur = (rec.care.counts && rec.care.counts[itemId]) || { done: 0 };
     await db.deleteCareCountForDate(storeId, rabbit.id, date, itemId);
     const remaining = { ...(rec.care.counts || {}) };
     delete remaining[itemId];
     await db.writeDailyRecord(storeId, rabbit.id, date, {
       care: { allDone: computeAllDone(rec.care.items, remaining) },
     });
-    if (cur.done) await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: -cur.done });
     return;
   }
 
-  const wasDone = rec.care.items && rec.care.items[itemId] === true;
   await db.deleteCareItemForDate(storeId, rabbit.id, date, itemId);
   const remaining = { ...(rec.care.items || {}) };
   delete remaining[itemId];
   await db.writeDailyRecord(storeId, rabbit.id, date, {
     care: { allDone: computeAllDone(remaining, rec.care.counts) },
   });
-  if (wasDone) {
-    await db.bumpTotals(storeId, rabbit.id, { careItemId: itemId, careDelta: -1 });
-  }
 }
 
 // ---- ケア担当「項目を編集」：その日の予定（careSchedule/careCounts）と当日記録の両方を直す ----
@@ -253,7 +262,6 @@ export async function updateRunCheck(storeId, rabbit, date, index, done) {
   if (delta === 0) return;
 
   await db.writeDailyRecord(storeId, rabbit.id, date, { run: { doneCount: next } });
-  await db.bumpTotals(storeId, rabbit.id, { runDelta: delta });
 }
 
 // ラン1回分をLINE送信済みにする
