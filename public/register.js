@@ -194,9 +194,6 @@ function readCards() {
 
 // 未入力の必須項目を1つ返す（無ければ null）
 function firstMissing() {
-  if (!editId && !F("staffName").value.trim()) {
-    return { el: F("staffName"), label: "担当スタッフ" };
-  }
   if (!F("checkInDate").value) return { el: F("checkInDate"), label: "お預かり日" };
   if (!F("checkOutDate").value) return { el: F("checkOutDate"), label: "お迎え日" };
   if (!F("ownerLastName").value.trim()) return { el: F("ownerLastName"), label: "飼い主の苗字" };
@@ -438,7 +435,12 @@ async function onSave() {
 
     if (!groupId) groupId = newGroupId();
     const staffName = F("staffName").value.trim();
-    if (staffName) localStorage.setItem("lastStaffName", staffName);
+    if (!staffName) {
+      showError(schedMsg, "登録した担当スタッフを入力してください");
+      F("staffName").focus();
+      return;
+    }
+    localStorage.setItem("lastStaffName", staffName);
     for (const e of entries) {
       await db.saveRabbit(STORE_ID, {
         ...shared,

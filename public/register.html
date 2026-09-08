@@ -14,15 +14,8 @@
       <span></span>
     </header>
 
-    <!-- STEP 1：担当・飼い主・日程（共通） + うさぎ（複数可） -->
+    <!-- STEP 1：飼い主・日程（共通） + うさぎ（複数可） -->
     <form id="rabbit-form" class="stack">
-      <h2 class="form-sec">担当スタッフ</h2>
-      <label class="field" id="staff-name-field">
-        <span>担当スタッフ <span class="hint">この登録の担当。あとで誰が入れたか分かるように</span></span>
-        <input type="text" id="staffName" placeholder="例：田中" autocomplete="off" />
-      </label>
-      <p class="muted" id="staff-name-note" style="font-size: 12px; margin: -6px 0 0" hidden></p>
-
       <h2 class="form-sec">日程・送迎</h2>
       <div class="row">
         <label class="field grow"><span>お預かり日 <b class="req">必須</b></span><input type="date" id="checkInDate" required /></label>
@@ -65,6 +58,17 @@
       <p class="sched-hint">ラン回数はセルで選択</p>
       <div id="schedule-table"></div>
       <div id="care-breakdown" hidden></div>
+
+      <div class="staff-confirm" id="staff-name-field">
+        <label class="field" style="margin: 0">
+          <span>登録した担当スタッフ <b class="req">必須</b></span>
+          <input type="text" id="staffName" placeholder="あなたの名前" autocomplete="off" />
+        </label>
+        <p class="sub" style="font-size: 12px; margin: 6px 0 0">
+          ※あとで「誰が登録したか」を残すためのメモです（予定には影響しません）
+        </p>
+      </div>
+      <p class="muted" id="staff-name-note" style="font-size: 12px; margin: 4px 0 0" hidden></p>
 
       <div class="row">
         <button type="button" class="primary" id="save-btn">登録する</button>
