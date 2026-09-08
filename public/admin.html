@@ -75,6 +75,25 @@
         </div>
       </section>
 
+      <section>
+        <h2 class="form-sec">ログインパスワード</h2>
+        <div class="panel">
+          <p class="panel-note">スタッフ全員が使うログインパスワード。変更すると他の端末は次回から新しいパスワードが必要になります。</p>
+          <form id="pw-form" class="stack">
+            <label class="field" style="margin-bottom:0">
+              <span>今のパスワード</span>
+              <input type="password" id="pw-current" autocomplete="off" required />
+            </label>
+            <label class="field" style="margin-bottom:0">
+              <span>新しいパスワード（6文字以上）</span>
+              <input type="password" id="pw-new" autocomplete="off" required minlength="6" />
+            </label>
+            <button type="submit" class="small primary">パスワードを変更</button>
+            <div id="pw-message"></div>
+          </form>
+        </div>
+      </section>
+
     </div>
   </div>
 

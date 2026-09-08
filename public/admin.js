@@ -2,7 +2,7 @@
 // ログインは全員共通。この画面を開くときだけ「設定パスワード」を別途要求する。
 // 保存ボタンはなし。追加・削除・並べ替え・編集はすべて自動保存する。
 
-import { requireAuth, verifyManagerPassword } from "./auth.js";
+import { requireAuth, verifyManagerPassword, changeStaffPassword } from "./auth.js";
 import * as db from "./db.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
 import { todayISO } from "./schedule.js";
@@ -270,10 +270,36 @@ function iconBtn(text, label, fn, cls) {
 function info(id, t) { const e = F(id); e.className = "msg info"; e.textContent = t; }
 function err(id, e) { console.error(e); const el = F(id); el.className = "msg error"; el.textContent = e.message || "失敗しました"; }
 
+// ---- ログインパスワードの変更 ----
+async function onChangePassword(e) {
+  e.preventDefault();
+  const cur = F("pw-current").value;
+  const nw = F("pw-new").value;
+  F("pw-message").textContent = "";
+  try {
+    await changeStaffPassword(cur, nw);
+    F("pw-current").value = "";
+    F("pw-new").value = "";
+    info("pw-message", "変更しました。次回のログインから新しいパスワードを使ってください。");
+  } catch (e2) {
+    const code = e2 && e2.code;
+    if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+      err("pw-message", new Error("今のパスワードが違います"));
+    } else if (code === "auth/weak-password") {
+      err("pw-message", new Error("新しいパスワードが弱すぎます（6文字以上）"));
+    } else if (code === "auth/too-many-requests") {
+      err("pw-message", new Error("試行が多すぎます。しばらく待ってからやり直してください"));
+    } else {
+      err("pw-message", e2);
+    }
+  }
+}
+
 // ---- 起動 ----
 F("add-item").addEventListener("click", onAddItem);
 F("add-holiday").addEventListener("click", onAddHoliday);
 F("busy-add").addEventListener("click", onAddBusy);
+F("pw-form").addEventListener("submit", onChangePassword);
 
 // 設定パスワードのゲート。1回通ればこのタブを閉じるまで再入力不要（sessionStorage）。
 const GATE_KEY = "settingsUnlocked";
