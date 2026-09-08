@@ -60,18 +60,13 @@ function getCellStatus(rabbit, date, type, holidays, busyPeriods, countableIds) 
     return rec.photo.needed ? "〇" : "";
   }
   if (isBusyPeriod(date, busyPeriods)) return "";
-  const ps = rabbit.photoSchedule && rabbit.photoSchedule[date];
-  let needed;
-  if (ps === "needed") needed = true;
-  else if (ps === "not_needed") needed = false;
-  else
-    needed = calculatePhotoNeeded(
-      date,
-      rabbit.careSchedule,
-      rabbit.runSchedule,
-      holidays,
-      busyPeriods,
-    );
+  const needed = calculatePhotoNeeded(
+    date,
+    rabbit.careSchedule,
+    rabbit.runSchedule,
+    holidays,
+    busyPeriods,
+  );
   return needed ? "〇" : "";
 }
 

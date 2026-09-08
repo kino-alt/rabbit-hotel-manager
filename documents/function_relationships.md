@@ -106,7 +106,7 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 
 | 関数名 | 役割 | 呼び出し元 |
 |---|---|---|
-| `getOrCreateDailyRecord(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | その日の記録が無ければ予定からコピーして新規作成。既にあれば、ラン回数と「予定に増えたケア項目」を追随させる(実施済みは保持、**削除はしない**)。写真要否は`photoSchedule`優先、無ければ`calculatePhotoNeeded()` | care.js / run.js(`ensureRecords`) |
+| `getOrCreateDailyRecord(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | その日の記録が無ければ予定からコピーして新規作成。既にあれば、ラン回数と「予定に増えたケア項目」を追随させる(実施済みは保持、**削除はしない**)。写真要否は `calculatePhotoNeeded()`（繁忙期は不要） | care.js / run.js(`ensureRecords`) |
 | `reconcileDailyRecord(storeId, rabbit, date, countableIds)` | **既存の**当日記録を予定へ完全に合わせる(増えた項目は追加、外れた未実施項目は削除、実施済み・done・lineSentは保持)。記録が無い日は何もしない | register.js(保存直後・変えた日だけ) |
 | `updateCareItem` / `setCareCount` | ケア項目1つの実施(チェック / 回数)を更新し全完了を自動判定 | care.js |
 | `addCareToday` / `removeCareToday` / `setCareNeedToday` | ケア担当「項目を編集」。その日の**予定**(`db.patchScheduleDay()` = `arrayUnion`/`arrayRemove` 等)と**当日記録**の両方を直す | care.js |

@@ -60,13 +60,10 @@ function activeOnDate(r, date) {
   return r.checkInDate <= date && date <= r.checkOutDate;
 }
 
-// その日に写真が必要か（記録が無ければ予定・自動判定から）
+// その日に写真が必要か（記録があればその値、無ければ自動判定）
 function photoNeededToday(r, date) {
   const rec = r.dailyRecords && r.dailyRecords[date];
   if (rec && rec.photo) return !!rec.photo.needed;
-  const ps = r.photoSchedule && r.photoSchedule[date];
-  if (ps === "needed") return true;
-  if (ps === "not_needed") return false;
   return calculatePhotoNeeded(date, r.careSchedule, r.runSchedule, holidays, busyPeriods);
 }
 

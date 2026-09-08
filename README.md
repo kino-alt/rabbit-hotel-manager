@@ -150,7 +150,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     careSchedule:  { "YYYY-MM-DD": [itemId, ...] }
     careCounts:    { "YYYY-MM-DD": { itemId: 回数 } }   (careItemsMaster.countable の項目のみ。通常項目は持たない)
     runSchedule:   { "YYYY-MM-DD": 回数 }
-    photoSchedule: { "YYYY-MM-DD": "needed" | "not_needed" }   (無い日は自動判定。繁忙期は常に不要)
+    (photoSchedule は廃止。写真要否は当日記録の photo.needed と自動判定 calculatePhotoNeeded で決まる)
     dailyRecords:  { "YYYY-MM-DD": {
         care:  { items: { itemId: bool },              (通常項目)
                  counts: { itemId: { need, done } },   (回数式項目)

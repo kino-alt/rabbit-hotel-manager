@@ -97,7 +97,7 @@
 
 | 順番 | ファイル.関数 | 役割 |
 |---|---|---|
-| 1 | `dailyRecord.js` の `getOrCreateDailyRecord(storeId, rabbit, date, holidays)`(記録作成時) | `photoSchedule`の指定があればそれを、無ければ `schedule.js` の `calculatePhotoNeeded(...)` を呼び、写真が必要な日かを自動判定して初期値をセット |
+| 1 | `dailyRecord.js` の `getOrCreateDailyRecord(storeId, rabbit, date, holidays)`(記録作成時) | `schedule.js` の `calculatePhotoNeeded(...)` を呼び、写真が必要な日かを自動判定して初期値をセット |
 | 2 | `care.js` または `run.js` の `onPhotoCheck(rabbit, field, value)` | 「写真が必要」「撮影済み」「送信済み」チェックを受け取る |
 | 3 | `dailyRecord.js` の `updatePhotoStatus(storeId, rabbit, date, field, value)` | 該当フラグ(`needed`/`taken`/`sent`)を更新(自動判定後も手動で上書き可能) |
 | 4 | `db.js` の `writeDailyRecord(...)` | Firestoreに書き込む |
