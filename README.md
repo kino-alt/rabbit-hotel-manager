@@ -24,16 +24,25 @@ public/                 … Hosting で配信するファイル
   seed-stores.html / seed-stores.js … 店舗(store_1 本店 / store_2 豊中店)の初期登録(初回のみ)
 
   firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集)
+  vendor.js          … Firebase SDK の唯一の入口(バージョン更新はこのファイルだけ)
   auth.js            … 共通ロジック層:スタッフ共有アカウントのログイン + 設定パスワード照合
-  schedule.js        … 共通ロジック層:日付計算
+  schedule.js        … 共通ロジック層:日付計算・その日の状態(careOnDate / runOnDate)
   dailyRecord.js     … 共通ロジック層:当日記録の生成・更新
+  careReconcile.js   … 純粋ロジック:当日記録を予定へ合わせる(dailyRecord.js から使用・テスト対象)
+  scheduleMerge.js   … 純粋ロジック:予定の3-wayマージ判定(db.js から使用・テスト対象)
+  scheduleGrid.js    … 純粋ロジック:登録STEP2の作業データ ↔ Firestore形式(テスト対象)
   db.js              … データアクセス層:Firestoreの読み書き
+  esc.js / swipe.js / toast.js … 小さな共通部品(HTMLエスケープ / スワイプ完了 / 失敗トースト)
+  icons.js / icons.svg … アイコン(SVGスプライトと、JS生成部分用の icon() ヘルパー)
   style.css          … 全画面共通デザイン
 
 firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
+package.json / eslint.config.js / .prettierrc.json … 開発ツール(npm run check)
+tests/ … 純粋ロジックのテスト(node --test)
 ```
 
 層の方針は設計資料どおり:画面層は Firestore を直接触らず、必ず `auth.js` / `dailyRecord.js` / `db.js` を経由します。
+Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各ファイルに直書きしない）。
 
 ## セットアップ手順
 
@@ -136,6 +145,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     ownerLastName, rabbitName, groupId,
     checkInDate, checkOutDate,          ("YYYY-MM-DD")
     transportDropoff, transportPickup, isFirstTime, note,
+    registeredBy,                      (登録した担当スタッフ名。登録時のみ入力。未入力なら null)
     createdAt, hiddenAt, expireAt,
     careSchedule:  { "YYYY-MM-DD": [itemId, ...] }
     careCounts:    { "YYYY-MM-DD": { itemId: 回数 } }   (careItemsMaster.countable の項目のみ。通常項目は持たない)

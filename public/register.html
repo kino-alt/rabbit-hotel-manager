@@ -32,6 +32,12 @@
       <h2 class="form-sec">飼い主</h2>
       <label class="field"><span>苗字 <b class="req">必須</b></span><input type="text" id="ownerLastName" required placeholder="例：山田" /></label>
 
+      <label class="field" id="registered-by-field">
+        <span>登録した人 <span class="hint">この登録の担当。あとで誰が入れたか分かるように</span></span>
+        <input type="text" id="registeredBy" placeholder="例：田中" autocomplete="off" />
+      </label>
+      <p class="muted" id="registered-by-note" style="font-size: 12px; margin: -6px 0 0" hidden></p>
+
       <h2 class="form-sec">うさぎ</h2>
       <div id="rabbit-cards" class="stack"></div>
       <button type="button" class="ghost" id="add-rabbit-card">＋ うさぎを追加</button>

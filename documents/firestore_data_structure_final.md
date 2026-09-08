@@ -1,6 +1,19 @@
-# Firestoreデータ構造(最終版・改訂3)
+# Firestoreデータ構造(最終版・改訂4)
+
+> この文書は初期実装時点のもの。以降の変更（改訂4）を本文にも反映済み。
+> セットアップ・セキュリティ・引き継ぎ手順の最新はリポジトリ直下の `README.md` を参照。
 
 ## 改訂内容
+
+### 改訂4(2026-09・運用開始後の見直し)
+
+- 認証を**匿名認証 → メール/パスワードの共有アカウント**に変更（`STAFF_EMAIL` 固定）。
+  ルールは `request.auth.token.firebase.sign_in_provider == 'password'` を要求。
+- `config/common` から **`commonPassword` を削除**（ログインは Firebase Auth 側）。`managerPassword` のみ残す。
+- **`careTotals` / `runTotal` と `db.bumpTotals()` を廃止**（どの画面も読んでおらず、当日記録と非アトミックにズレる原因だった）。累計が要れば `dailyRecords` から集計する。
+- うさぎ文書に **`registeredBy`**（登録した担当スタッフ名。登録時のみ入力）を追加。
+- App Check（reCAPTCHA Enterprise）と Firestore オフライン永続化を導入。
+
 
 ### 改訂2まで
 
@@ -20,11 +33,11 @@
 
 ```
 config/common(全店舗共通・ドキュメントIDは "common" 固定)
-    commonPassword   … 全員共通のログインパスワード（login.html）
     managerPassword  … 設定パスワード。設定画面(admin.html)を開くときだけ要求する
                        （ログインとは別。通れば sessionStorage でそのタブ内は再入力不要）
+    ※ログインパスワードはここではなく Firebase Authentication の共有アカウント側。
     ※クライアントからの更新・削除はセキュリティルールで禁止。
-      変更はFirebaseコンソールで直接おこなう。
+      設定パスワードの変更は設定画面の「ログインパスワード」欄、または Firebase コンソール。
 
 stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
                  store_1=本店(定休日 火木) / store_2=豊中店(定休日 水木)。
@@ -56,6 +69,7 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
         transportPickup    … 送迎:お迎え時(true/false)
         isFirstTime        … 初めてか(true/false)
         note               … 備考
+        registeredBy       … この登録をした担当スタッフ名(登録時のみ入力。未入力なら null)
         createdAt          … 作成日時(serverTimestamp)
         hiddenAt           … 非表示にした日時(通常は null。宿泊終了操作で serverTimestamp)
         expireAt           … hiddenAt の約6ヶ月後(Timestamp型。Firestore TTL の対象。通常は null)
@@ -76,11 +90,9 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
             ※記載がない日は自動計算(定休日でなく、ケア・ラン予定がともにない日は「必要」)
             ※宿泊全体の編集画面で、複数日まとめて編集可能
 
-        careTotals(宿泊全体でのケア項目ごとの累計実施回数)
-            {項目ID}: 累計実施回数
-            ※dailyRecords の増減に合わせて db.bumpTotals() で加減算
-
-        runTotal(宿泊全体でのラン累計実施回数)
+        ※（廃止）careTotals / runTotal … 宿泊全体の累計を別フィールドで持っていたが、
+          どの画面も参照しておらず、当日記録の書き込みと非アトミックにズレるため改訂4で削除。
+          累計が要るときは dailyRecords から集計する。
 
         dailyRecords(日付ごとの実績記録。マップ形式のフィールドとして同じ文書内に持つ)
             {日付}
@@ -110,22 +122,27 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
 
 `careItemsMaster` も同じ理由(1回の読み書きで済む・TTLの消し残りがない)で、サブコレクションではなく店舗文書内の配列フィールドにしている。
 
-## セキュリティについて(匿名認証+セキュリティルール)
+## セキュリティについて(メール/パスワード認証 + セキュリティルール + App Check)
+
+> 改訂4で匿名認証を廃止。最新は `README.md` の「セキュリティ」節。
 
 **課題**:Webアプリの接続情報はブラウザから誰でも見えるため、パスワード画面だけでは「入り口を塞いでいる」だけで、詳しい人が直接Firestoreにアクセスすることを技術的には防げない。
 
 **対策**:
 
-1. 正しいパスワードが入力された時、裏側で自動的に「匿名認証(Firebase Authenticationの無料機能)」でログインする(スタッフの操作感は変わらない)
-2. Firestoreのセキュリティルールで「ログイン済みの人にしかデータを見せない・書き込ませない」と設定する
-
-これにより、パスワードを知らない・アプリを経由しない第三者は、技術的にもデータへ到達できなくなる。追加のアカウント登録や、スタッフへの追加説明は不要。
+1. スタッフは Firebase Authentication の**共有アカウント1つ**（メール/パスワード）でログインする。
+   `login.html` はパスワードだけを入力し、内部で `STAFF_EMAIL` 固定でサインインする。
+2. Firestore のセキュリティルールで「**メール/パスワードで**ログイン済みの人にしか読み書きさせない」
+   （`request.auth.token.firebase.sign_in_provider == 'password'`）。匿名認証では通らない。
+3. App Check（reCAPTCHA Enterprise）で「正規のWebアプリからのアクセスか」を検証する。
 
 **セキュリティルールの要点**(`firestore.rules`):
 
-- `config/{doc}`:`get`はログイン済みなら可(ログイン後のパスワード照合に必要)。`create`は該当ドキュメントが無いときだけ可(setup.htmlの初回実行)。`update`/`delete`/`list`はクライアントから不可。
-- `stores/{storeId}` と `stores/{storeId}/rabbits/{rabbitId}`:ログイン済みなら`get`/`list`/`write`可。
-  `rabbits`の`list`を明示的に許可しているのは、ケア/ラン/一覧画面が`subscribeActiveRabbits()`でコレクションをクエリ購読するため。
+- `staff()` = `request.auth != null && sign_in_provider == 'password'`
+- `config/{doc}`:`get` は staff なら可（設定パスワード照合に必要）。`create` は該当ドキュメントが無いときだけ可（setup.html の初回実行）。`update`/`delete`/`list` はクライアントから不可。
+- `stores/{storeId}` と `stores/{storeId}/rabbits/{rabbitId}`:staff なら `get`/`list`/`write` 可。
+  `rabbits` の `list` を明示的に許可しているのは、ケア/ラン/一覧画面が `subscribeActiveRabbits()` でコレクションをクエリ購読するため。
+- （既知の割り切り）スキーマ検証はしていない。共有アカウントなので個人単位の監査ログもない。
 
 ## 主な設計の考え方(変更なし)
 
@@ -134,7 +151,6 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
 | `config`と`stores`を分離 | パスワードのみ全店舗共通、それ以外(ケア項目マスタ・定休日)は店舗ごとに管理するため |
 | `careSchedule`/`runSchedule`/`photoSchedule` | 宿泊登録時に「いつ・何を」やるかをあらかじめ割り振り、日ごとに違う内容にできるようにするため |
 | `dailyRecords`が予定と別に存在 | 当日の実施状況・LINE送信状況を記録し、かつ予定にない臨機応変な追加・削除にも対応するため |
-| `careTotals`/`runTotal` | 日ごとの記録がどう変化しても、宿泊全体としての実施回数を正しく積み上げるため |
 | `hiddenAt` + Firestore TTL(`expireAt`) | 非表示後6ヶ月で自動的にデータを削除し、手動でのバックアップ作業を不要にするため |
 
 ## 画面での使い分け(未来 / 今日以降)
