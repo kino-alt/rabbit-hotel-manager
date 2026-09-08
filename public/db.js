@@ -8,6 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { firestore, STORE_ID } from "./firebase-config.js";
+import { computeSchedulePatch, DELETE } from "./scheduleMerge.js";
 
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 182;
 
@@ -153,29 +154,17 @@ export async function patchScheduleDay(storeId, rabbitId, ops) {
 }
 
 // 予定の保存（3-way マージ・トランザクション版）。登録画面の保存から使う。
-//   base    … STEP2 に入った時点の値（利用者が編集を始めた基準）
-//   next    … グリッドの現在値（利用者が作りたい状態）
-// トランザクション内でサーバの最新値 cur を読み、
-//   「利用者が変えた日（next≠base）」かつ「まだサーバがその値になっていない日（next≠cur）」
-// だけを field path 単位で書く。別端末が別の日／同じ結論に更新済みなら触らない。
+// マージ判定は scheduleMerge.computeSchedulePatch（純粋関数）に切り出してテスト可能にしている。
 // 戻り値：実際に書き込んだ field path の配列。
 export async function writeSchedulesMerge(storeId, rabbitId, base, next) {
   const ref = rabbitRef(storeId, rabbitId);
   return runTransaction(firestore, async (tx) => {
     const snap = await tx.get(ref);
     const cur = snap.exists() ? snap.data() : {};
+    const raw = computeSchedulePatch(base, next, cur);
     const patch = {};
-    for (const key of ["careSchedule", "careCounts", "runSchedule"]) {
-      if (!next[key]) continue;
-      const b = base[key] || {};
-      const n = next[key] || {};
-      const c = cur[key] || {};
-      for (const d of new Set([...Object.keys(b), ...Object.keys(n)])) {
-        const userChanged = JSON.stringify(n[d]) !== JSON.stringify(b[d]);
-        if (!userChanged) continue;
-        if (JSON.stringify(n[d]) === JSON.stringify(c[d])) continue;  // 既にその状態
-        patch[`${key}.${d}`] = (d in n) ? n[d] : deleteField();
-      }
+    for (const [path, val] of Object.entries(raw)) {
+      patch[path] = val === DELETE ? deleteField() : val;
     }
     const paths = Object.keys(patch);
     if (paths.length) tx.update(ref, patch);

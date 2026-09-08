@@ -130,3 +130,23 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 - **残る割り切り**：同じうさぎ・同じ日を2人が同時に別内容へ編集した場合は最後の書き込みが勝つ（セマンティックな衝突のためトランザクションでも解決しない）。
 
 詳細は `documents/function_relationships.md` の「改訂4」と「同時編集の扱い」。
+
+## 開発（テスト）
+
+ビルドは不要。純粋ロジック（日付計算・予定の3-wayマージ・当日記録の整合）に
+Node 標準のテストランナーでテストを用意している。依存パッケージはなし。
+
+```
+npm test          # tests/ 以下を実行（Node 20+ が必要）
+```
+
+テスト対象（いずれも Firestore に依存しない純粋関数）:
+
+| ファイル | 内容 |
+|---|---|
+| `public/schedule.js` | 日付ユーティリティ、定休日・繁忙期判定、`careOnDate` / `runOnDate` / `calculatePhotoNeeded` |
+| `public/scheduleGrid.js` | 登録STEP2の作業データ ↔ Firestore形式の変換、`buildEntry` |
+| `public/scheduleMerge.js` | `db.writeSchedulesMerge` の3-wayマージ判定（本体から切り出し） |
+| `public/careReconcile.js` | `dailyRecord.js` の `reconcileCare` / `computeAllDone`（本体から切り出し） |
+
+`main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が `npm test` を実行する。
