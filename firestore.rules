@@ -1,36 +1,39 @@
 rules_version = '2';
 
 // うさぎホテル業務管理アプリ
-// 方針：匿名認証でログイン済みのユーザーだけが読み書きできる。
-//       パスワード画面はあくまで入口。技術的な防御はこのルールで行う。
+// 方針：本物のメール/パスワードでログイン済みのユーザーだけが読み書きできる。
+//       スタッフは Firebase Authentication に1つだけ作った共有アカウントでログインする
+//       （匿名認証は使わない）。パスワード画面はあくまで入口で、技術的な防御はこのルール。
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
+    // メール/パスワードでログイン済みか（匿名・カスタム等は不可）
+    function staff() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password';
     }
 
-    // 全店舗共通の設定（パスワード）
-    // get：ログイン後のパスワード照合に必要
+    // 設定パスワード（managerPassword）だけを置く文書。
+    // get：設定画面のパスワード照合に必要（ログイン済みスタッフのみ）
     // 作成：まだ存在しない場合のみ（setup.html の初回実行）
-    // 更新・削除：クライアントからは不可（変更はFirebaseコンソールでおこなうこと）
+    // 更新・削除：クライアントからは不可（変更は Firebase コンソールで）
     match /config/{doc} {
-      allow get: if signedIn();
+      allow get: if staff();
       allow list: if false;
-      allow create: if signedIn() && !exists(/databases/$(database)/documents/config/$(doc));
+      allow create: if staff() && !exists(/databases/$(database)/documents/config/$(doc));
       allow update, delete: if false;
     }
 
     // 店舗設定
     match /stores/{storeId} {
-      allow get, list, write: if signedIn();
+      allow get, list, write: if staff();
 
       // うさぎの宿泊記録
       // list を明示的に許可：ケア/ラン/一覧画面は subscribeActiveRabbits() で
       // コレクションをクエリ購読するため、get だけでは一覧取得が弾かれる。
       match /rabbits/{rabbitId} {
-        allow get, list, write: if signedIn();
+        allow get, list, write: if staff();
       }
     }
   }

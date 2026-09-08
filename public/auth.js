@@ -1,59 +1,40 @@
-// 共通ロジック層：パスワード照合 + 匿名ログイン
+// 共通ロジック層：スタッフ共有アカウントでのログイン + 設定パスワードの照合
 //
-// スタッフから見える操作は「共通パスワードを1つ入力するだけ」。
-// 正しければ裏側で匿名認証にログインし、以後はFirestoreのセキュリティルールが
-// 「ログイン済みか」を見てアクセス可否を判定する。
+// スタッフから見える操作は「パスワードを1つ入力するだけ」。
+// 内部では Firebase Authentication のメール/パスワードで、STAFF_EMAIL 固定＋入力パスワードで
+// ログインする（匿名認証は使わない）。以後は Firestore のセキュリティルールが
+// 「メール/パスワードでログイン済みか」を見てアクセス可否を判定する。
 
 import {
-  signInAnonymously as fbSignInAnonymously,
+  signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import { auth } from "./firebase-config.js";
+import { auth, STAFF_EMAIL } from "./firebase-config.js";
 import { getConfig } from "./db.js";
 
-// 入力パスワードを config と照合し、一致すれば匿名ログイン状態を維持する。
-// Firestoreのセキュリティルールが「ログイン済みのみ読み取り可」なので、
-// まず匿名ログインしてから config を読み、パスワードが違えばログアウトする。
-//
-// ログインは全員同じ（共通パスワード）。設定画面だけは admin.js 側で
-// 「設定パスワード（managerPassword）」を別途要求する。
+// 入力パスワードで共有アカウントにログインする。
+// パスワード違い等（auth/*）は { ok:false }、それ以外の障害は例外を投げる。
 export async function login(inputPassword) {
-  await fbSignInAnonymously(auth);
-
-  let cfg;
   try {
-    cfg = await getConfig();
+    await signInWithEmailAndPassword(auth, STAFF_EMAIL, inputPassword);
   } catch (err) {
-    await signOut(auth);
+    if (typeof err?.code === "string" && err.code.startsWith("auth/")) {
+      return { ok: false };
+    }
     throw err;
   }
-  if (!cfg) {
-    await signOut(auth);
-    throw new Error("初期設定が未完了です（setup.html を先に実行してください）");
-  }
-
-  // 共通パスワードのみでログイン可否を判定する
-  const ok = !!cfg.commonPassword && inputPassword === cfg.commonPassword;
-  if (!ok) {
-    await signOut(auth);
-    return { ok: false };
-  }
-
   localStorage.setItem("role", "staff");
   return { ok: true, role: "staff" };
 }
 
 // 設定画面を開くための「設定パスワード」を照合する（ログインとは別）。
+// config/common はログイン済みスタッフだけが読めるルールになっている。
 export async function verifyManagerPassword(inputPassword) {
   const cfg = await getConfig();
   if (!cfg || !cfg.managerPassword) return false;
   return inputPassword === cfg.managerPassword;
-}
-
-export function signInAnonymously() {
-  return fbSignInAnonymously(auth);
 }
 
 export function getRole() {
@@ -64,14 +45,23 @@ export function isManager() {
   return getRole() === "manager";
 }
 
-// 各画面の先頭で呼ぶ。未ログインなら login.html へ飛ばす。
+// 各画面の先頭で呼ぶ。メール/パスワードでログイン済みでなければ login.html へ飛ばす。
 export function requireAuth(onReady) {
   onAuthStateChanged(auth, (user) => {
-    if (!user) {
+    if (!user || user.isAnonymous) {
       location.replace("login.html");
       return;
     }
     if (onReady) onReady(user);
+  });
+}
+
+// setup.html / seed-stores.html 用：ログイン済みなら onReady、未ログインなら message を表示。
+// （初回セットアップは、先に login.html でログインしてから開く）
+export function requireLogin(onReady, onMissing) {
+  onAuthStateChanged(auth, (user) => {
+    if (user && !user.isAnonymous) onReady(user);
+    else onMissing();
   });
 }
 
