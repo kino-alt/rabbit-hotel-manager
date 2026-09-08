@@ -183,10 +183,14 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 ## 開発（テスト）
 
 ビルドは不要。純粋ロジック（日付計算・予定の3-wayマージ・当日記録の整合）に
-Node 標準のテストランナーでテストを用意している。依存パッケージはなし。
+Node 標準のテストランナーでテストを用意している。
 
 ```
+npm install       # 初回のみ（ESLint / Prettier）
 npm test          # tests/ 以下を実行（Node 20+ が必要）
+npm run lint      # ESLint
+npm run format    # Prettier で整形
+npm run check     # lint + format:check + test（CI と同じ）
 ```
 
 テスト対象（いずれも Firestore に依存しない純粋関数）:
@@ -197,5 +201,21 @@ npm test          # tests/ 以下を実行（Node 20+ が必要）
 | `public/scheduleGrid.js` | 登録STEP2の作業データ ↔ Firestore形式の変換、`buildEntry` |
 | `public/scheduleMerge.js` | `db.writeSchedulesMerge` の3-wayマージ判定（本体から切り出し） |
 | `public/careReconcile.js` | `dailyRecord.js` の `reconcileCare` / `computeAllDone`（本体から切り出し） |
+| `public/esc.js` | HTMLエスケープ |
 
-`main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が `npm test` を実行する。
+`main` への push と Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が
+`npm run lint` / `npm run format:check` / `npm test` を実行する。
+
+## 本番に出す前の動作確認（プレビュー）
+
+実データに影響を与えずに変更を確認したいとき、Firebase Hosting のプレビューチャンネルを使う
+（同じプロジェクト・別URL・7日で自動失効。Spark でも可）:
+
+```
+firebase hosting:channel:deploy pr-xxx     # 一時URLが発行される
+firebase hosting:channel:delete pr-xxx     # 手動で消すとき
+```
+
+一時URLは Firestore/Auth は本番と共有する（＝本番データを触る）点に注意。
+データも完全に分けたい場合は、別の Firebase プロジェクトを作って `.firebaserc` に
+エイリアス（`firebase use --add`）を足し、`firebase-config.js` を切り替える。
