@@ -11,7 +11,7 @@
 - **廃止**：`db.bumpTotals()` と `careTotals` / `runTotal`（どの画面も未参照・非アトミック）。
 - **切り出し（純粋モジュール、テスト対象）**：`scheduleMerge.js`（3-wayマージ）、`careReconcile.js`
   （`reconcileCare` / `computeAllDone`）、`esc.js`、`swipe.js`、`icons.js`、`toast.js`、`vendor.js`（Firebase SDK の唯一の入口）。
-- `register.js`：登録時に `registeredBy`（担当スタッフ名）を入力・保存。
+- `register.js`：登録時に `staffName`（担当スタッフ名）を入力・保存。
 
 ## 改訂内容
 

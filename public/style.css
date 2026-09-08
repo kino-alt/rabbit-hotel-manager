@@ -35,14 +35,40 @@
   background: var(--holiday);
 }
 
-/* アイコン（public/icons.svg のスプライトを <use> で参照）。
-   色は各シンボル内の fill/stroke="currentColor" 経由で CSS の color から効く */
+/* アイコン（public/icons/<name>.svg を CSS mask で表示）。色は currentColor */
 .ico {
   display: inline-block;
   width: 1.15em;
   height: 1.15em;
   vertical-align: -0.15em;
   flex: 0 0 auto;
+  background-color: currentColor;
+  -webkit-mask: var(--i) center / contain no-repeat;
+  mask: var(--i) center / contain no-repeat;
+}
+.ico-chevron-left {
+  --i: url("/icons/chevron-left.svg");
+}
+.ico-chevron-right {
+  --i: url("/icons/chevron-right.svg");
+}
+.ico-menu {
+  --i: url("/icons/menu.svg");
+}
+.ico-close {
+  --i: url("/icons/close.svg");
+}
+.ico-plus {
+  --i: url("/icons/plus.svg");
+}
+.ico-help {
+  --i: url("/icons/help.svg");
+}
+.ico-caret {
+  --i: url("/icons/caret.svg");
+}
+.ico-grip {
+  --i: url("/icons/grip.svg");
 }
 
 * {

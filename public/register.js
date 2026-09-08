@@ -201,6 +201,9 @@ function readCards() {
 
 // 未入力の必須項目を1つ返す（無ければ null）
 function firstMissing() {
+  if (!editId && !F("staffName").value.trim()) {
+    return { el: F("staffName"), label: "担当スタッフ" };
+  }
   if (!F("checkInDate").value) return { el: F("checkInDate"), label: "お預かり日" };
   if (!F("checkOutDate").value) return { el: F("checkOutDate"), label: "お迎え日" };
   if (!F("ownerLastName").value.trim()) return { el: F("ownerLastName"), label: "飼い主の苗字" };
@@ -556,8 +559,8 @@ async function onSave() {
     }
 
     if (!groupId) groupId = newGroupId();
-    const registeredBy = F("registeredBy").value.trim();
-    if (registeredBy) localStorage.setItem("lastStaffName", registeredBy);
+    const staffName = F("staffName").value.trim();
+    if (staffName) localStorage.setItem("lastStaffName", staffName);
     for (const e of entries) {
       await db.saveRabbit(STORE_ID, {
         ...shared,
@@ -565,7 +568,7 @@ async function onSave() {
         isFirstTime: e.card.isFirstTime,
         note: e.card.note,
         groupId,
-        registeredBy: registeredBy || null,
+        staffName: staffName || null,
         ...entryToSchedules(e),
       });
     }
@@ -638,7 +641,7 @@ F("remote-reload").addEventListener("click", () => {
 // 「登録した人」は前回入力した名前をあらかじめ入れておく（毎回打たなくてよいように）。
 if (!editId) {
   F("checkInDate").value = todayISO();
-  F("registeredBy").value = localStorage.getItem("lastStaffName") || "";
+  F("staffName").value = localStorage.getItem("lastStaffName") || "";
   addCard();
 }
 
@@ -653,7 +656,7 @@ requireAuth(async () => {
     F("save-btn").textContent = "保存";
     F("add-rabbit-card").hidden = true;
     // 「登録した人」は登録時のみ入力。編集画面では入力欄を隠し、記録済みの名前を表示する。
-    F("registered-by-field").hidden = true;
+    F("staff-name-field").hidden = true;
 
     // 1回きりの getDoc ではなく購読。編集中に他端末で変わっても
     // loadedRabbit は最新に保たれ、保存は writeSchedulesMerge で差分マージされる。
@@ -677,9 +680,10 @@ requireAuth(async () => {
       F("transportDropoff").checked = !!rabbit.transportDropoff;
       F("transportPickup").checked = !!rabbit.transportPickup;
 
-      if (rabbit.registeredBy) {
-        const note = F("registered-by-note");
-        note.textContent = `登録した人：${rabbit.registeredBy}`;
+      const staff = rabbit.staffName || rabbit.registeredBy; // 旧フィールド名も一応拾う
+      if (staff) {
+        const note = F("staff-name-note");
+        note.textContent = `担当スタッフ：${staff}`;
         note.hidden = false;
       }
 
