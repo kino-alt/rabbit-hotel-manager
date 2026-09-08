@@ -42,7 +42,7 @@ test("サーバが既に利用者の意図どおりなら書かない（冪等�
 test("利用者が触っていない日は、サーバが別端末で変わっていても触らない", () => {
   const patch = computeSchedulePatch(
     { careSchedule: { d1: ["a"], d2: ["x"] } },
-    { careSchedule: { d1: ["a"], d2: ["x"] } },     // 利用者は d1 も d2 も触っていない
+    { careSchedule: { d1: ["a"], d2: ["x"] } }, // 利用者は d1 も d2 も触っていない
     { careSchedule: { d1: ["a"], d2: ["x", "y"] } }, // 別端末が d2 を更新
   );
   assert.deepEqual(patch, {});
@@ -60,7 +60,7 @@ test("利用者とサーバが別々に変えた日は、利用者の値で上�
 test("next に無い系統（careCounts / runSchedule）は対象外", () => {
   const patch = computeSchedulePatch(
     { runSchedule: { d1: 1 } },
-    { careSchedule: {} },   // careSchedule だけ保存対象、runSchedule は含めない
+    { careSchedule: {} }, // careSchedule だけ保存対象、runSchedule は含めない
     { runSchedule: { d1: 1 } },
   );
   assert.deepEqual(patch, {});
@@ -80,6 +80,7 @@ test("3系統を同時に差分検出する", () => {
 
 test("引数が undefined でも落ちない", () => {
   assert.deepEqual(computeSchedulePatch(undefined, undefined, undefined), {});
-  assert.deepEqual(computeSchedulePatch(null, { careSchedule: { d: [1] } }, null),
-    { "careSchedule.d": [1] });
+  assert.deepEqual(computeSchedulePatch(null, { careSchedule: { d: [1] } }, null), {
+    "careSchedule.d": [1],
+  });
 });

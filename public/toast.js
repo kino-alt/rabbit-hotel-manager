@@ -20,9 +20,12 @@ export function toast(message, type = "info") {
   el.textContent = message;
   el.className = `toast-host show ${type}`;
   clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => {
-    el.className = `toast-host ${type}`;
-  }, type === "error" ? 6000 : 3000);
+  hideTimer = setTimeout(
+    () => {
+      el.className = `toast-host ${type}`;
+    },
+    type === "error" ? 6000 : 3000,
+  );
 }
 
 // 書き込み失敗の共通ハンドラ。DB 書き込みの .catch(notifyWriteError) で使う。

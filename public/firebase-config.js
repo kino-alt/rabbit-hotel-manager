@@ -6,11 +6,14 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  initializeAppCheck, ReCaptchaEnterpriseProvider,
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -21,7 +24,7 @@ const firebaseConfig = {
   storageBucket: "rabbit-hotel-manager.firebasestorage.app",
   messagingSenderId: "44112581380",
   appId: "1:44112581380:web:9e49fe5eb42496a37a7651",
-  measurementId: "G-FGMER1CDGG"
+  measurementId: "G-FGMER1CDGG",
 };
 
 // スタッフ共有アカウント。Firebase Authentication（メール/パスワード）に

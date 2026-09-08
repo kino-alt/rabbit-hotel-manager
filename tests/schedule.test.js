@@ -2,10 +2,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  toISO, parseISO, addDays, addMonths, formatMonthJP,
-  isStayEnded, eachDate, formatJP, dayWd, isHoliday,
-  calculateDefaultCareDate, isCountableItem, countableIdSet,
-  isBusyPeriod, careOnDate, runOnDate, calculatePhotoNeeded,
+  toISO,
+  parseISO,
+  addDays,
+  addMonths,
+  formatMonthJP,
+  isStayEnded,
+  eachDate,
+  formatJP,
+  dayWd,
+  isHoliday,
+  calculateDefaultCareDate,
+  isCountableItem,
+  countableIdSet,
+  isBusyPeriod,
+  careOnDate,
+  runOnDate,
+  calculatePhotoNeeded,
 } from "../public/schedule.js";
 
 const NO_HOL = { weekdays: [], dates: [] };
@@ -41,8 +54,11 @@ test("isStayEnded: hiddenAt があれば終了、無ければお迎え日が今�
 });
 
 test("eachDate は両端を含み、逆順や過大範囲でも暴走しない", () => {
-  assert.deepEqual(eachDate("2026-09-07", "2026-09-09"),
-    ["2026-09-07", "2026-09-08", "2026-09-09"]);
+  assert.deepEqual(eachDate("2026-09-07", "2026-09-09"), [
+    "2026-09-07",
+    "2026-09-08",
+    "2026-09-09",
+  ]);
   assert.deepEqual(eachDate("2026-09-09", "2026-09-07"), []);
   assert.ok(eachDate("2020-01-01", "2030-01-01").length <= 366);
 });
@@ -77,7 +93,11 @@ test("countableIdSet / isCountableItem", () => {
   assert.equal(isCountableItem({ countable: true }), true);
   assert.equal(isCountableItem({}), false);
   assert.equal(isCountableItem(null), false);
-  const set = countableIdSet([{ id: "a" }, { id: "b", countable: true }, { id: "c", countable: false }]);
+  const set = countableIdSet([
+    { id: "a" },
+    { id: "b", countable: true },
+    { id: "c", countable: false },
+  ]);
   assert.deepEqual([...set], ["b"]);
   assert.deepEqual([...countableIdSet(null)], []);
 });
@@ -112,7 +132,14 @@ test("careOnDate: 記録あり（done / lineSent を反映）", () => {
     careSchedule: { d: ["nail"] },
     careCounts: {},
     dailyRecords: {
-      d: { care: { items: { nail: true }, counts: { brush: { need: 3, done: 1 } }, done: true, lineSent: true } },
+      d: {
+        care: {
+          items: { nail: true },
+          counts: { brush: { need: 3, done: 1 } },
+          done: true,
+          lineSent: true,
+        },
+      },
     },
   };
   const c = careOnDate(rabbit, "d", new Set(["brush"]));
@@ -129,12 +156,20 @@ test("careOnDate: 予定も記録も無ければ exists=false", () => {
 });
 
 test("runOnDate: 予定を正とし、実施・送信済みは下回らせない", () => {
+  assert.deepEqual(runOnDate({ runSchedule: { d: 2 }, dailyRecords: {} }, "d"), {
+    need: 2,
+    done: 0,
+    sent: 0,
+    exists: true,
+  });
   assert.deepEqual(
-    runOnDate({ runSchedule: { d: 2 }, dailyRecords: {} }, "d"),
-    { need: 2, done: 0, sent: 0, exists: true },
-  );
-  assert.deepEqual(
-    runOnDate({ runSchedule: { d: 1 }, dailyRecords: { d: { run: { needed: 1, doneCount: 2, sentCount: 2 } } } }, "d"),
+    runOnDate(
+      {
+        runSchedule: { d: 1 },
+        dailyRecords: { d: { run: { needed: 1, doneCount: 2, sentCount: 2 } } },
+      },
+      "d",
+    ),
     { need: 2, done: 2, sent: 2, exists: true },
   );
   assert.equal(runOnDate({ runSchedule: {}, dailyRecords: {} }, "d").exists, false);
@@ -144,6 +179,14 @@ test("calculatePhotoNeeded: 予定なし・定休日でない・繁忙期でな�
   assert.equal(calculatePhotoNeeded("2026-09-10", {}, {}, NO_HOL, []), true);
   assert.equal(calculatePhotoNeeded("2026-09-10", { "2026-09-10": ["x"] }, {}, NO_HOL, []), false);
   assert.equal(calculatePhotoNeeded("2026-09-10", {}, { "2026-09-10": 1 }, NO_HOL, []), false);
-  assert.equal(calculatePhotoNeeded("2026-09-10", {}, {}, { weekdays: [], dates: ["2026-09-10"] }, []), false);
-  assert.equal(calculatePhotoNeeded("2026-09-10", {}, {}, NO_HOL, [{ start: "2026-09-01", end: "2026-09-30" }]), false);
+  assert.equal(
+    calculatePhotoNeeded("2026-09-10", {}, {}, { weekdays: [], dates: ["2026-09-10"] }, []),
+    false,
+  );
+  assert.equal(
+    calculatePhotoNeeded("2026-09-10", {}, {}, NO_HOL, [
+      { start: "2026-09-01", end: "2026-09-30" },
+    ]),
+    false,
+  );
 });
