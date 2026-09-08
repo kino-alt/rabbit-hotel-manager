@@ -975,7 +975,7 @@ table.overview td.rabbit-name {
   line-height: 1.2;
   font-weight: normal;
   white-space: nowrap;
-  transform: scale(0.62);
+  transform: scale(0.82);
   transform-origin: right bottom;
   color: var(--sub);
   background: var(--card);
