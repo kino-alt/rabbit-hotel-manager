@@ -33,7 +33,7 @@ export const STAFF_EMAIL = "kh2005haru@icloud.com";
 // App Check（reCAPTCHA Enterprise・スコアベースのサイトキー）。
 // 空文字なら App Check は初期化しない（未設定でも動く）。
 // 設定手順は README「セキュリティ」節を参照。
-const RECAPTCHA_SITE_KEY = "";
+const RECAPTCHA_SITE_KEY = "6LckYq8tAAAAAKNFXpIRsAqtyWK96xLaIaO8LKfz";
 
 // 店舗一覧（Firestore の stores/{id} と対応）。
 // 店舗を増やすときはこの配列に追加し、seed-stores.html で初期値を書き込む。
