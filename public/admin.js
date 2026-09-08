@@ -10,9 +10,9 @@ import { todayISO } from "./schedule.js";
 const WD = ["日", "月", "火", "水", "木", "金", "土"];
 const F = (id) => document.getElementById(id);
 
-let items = [];        // [{id, name, order}]
+let items = []; // [{id, name, order}]
 let holidays = { weekdays: [], dates: [] };
-let busyPeriods = [];  // [{ start, end }]
+let busyPeriods = []; // [{ start, end }]
 
 // ---- ケア項目 ----
 
@@ -21,7 +21,7 @@ function renderItems() {
   ul.innerHTML = "";
   items.forEach((it) => {
     const li = document.createElement("li");
-    li._item = it;   // ドロップ時に DOM 順から items を組み直すため
+    li._item = it; // ドロップ時に DOM 順から items を組み直すため
 
     const handle = document.createElement("span");
     handle.className = "ci-handle";
@@ -34,8 +34,10 @@ function renderItems() {
     input.type = "text";
     input.value = it.name;
     input.className = "grow";
-    input.addEventListener("input", () => { it.name = input.value; });
-    input.addEventListener("change", () => saveItems());   // フォーカスを外したら保存
+    input.addEventListener("input", () => {
+      it.name = input.value;
+    });
+    input.addEventListener("change", () => saveItems()); // フォーカスを外したら保存
 
     const cnt = document.createElement("label");
     cnt.className = "ci-count";
@@ -43,10 +45,22 @@ function renderItems() {
     const ccb = document.createElement("input");
     ccb.type = "checkbox";
     ccb.checked = !!it.countable;
-    ccb.addEventListener("change", () => { it.countable = ccb.checked; saveItems(); });
+    ccb.addEventListener("change", () => {
+      it.countable = ccb.checked;
+      saveItems();
+    });
     cnt.append(ccb, "回数");
 
-    const del = iconBtn("×", "削除", () => { items.splice(items.indexOf(it), 1); renderItems(); saveItems(); }, "del");
+    const del = iconBtn(
+      "×",
+      "削除",
+      () => {
+        items.splice(items.indexOf(it), 1);
+        renderItems();
+        saveItems();
+      },
+      "del",
+    );
 
     li.append(handle, input, cnt, del);
     ul.appendChild(li);
@@ -87,7 +101,11 @@ function enableItemDrag(li, handle) {
     if (!dragging) return;
     dragging = false;
     li.classList.remove("dragging");
-    try { handle.releasePointerCapture(e.pointerId); } catch (_) { /* 解放済みでも無視 */ }
+    try {
+      handle.releasePointerCapture(e.pointerId);
+    } catch (_) {
+      /* 解放済みでも無視 */
+    }
 
     const ul = F("care-items");
     const next = [...ul.children].map((c) => c._item).filter(Boolean);
@@ -105,7 +123,12 @@ function enableItemDrag(li, handle) {
 function onAddItem() {
   const name = F("new-item").value.trim();
   if (!name) return;
-  items.push({ id: "c_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, order: items.length, countable: false });
+  items.push({
+    id: "c_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    name,
+    order: items.length,
+    countable: false,
+  });
   F("new-item").value = "";
   renderItems();
   saveItems();
@@ -119,9 +142,11 @@ async function saveItems() {
   try {
     await db.updateCareItemsMaster(STORE_ID, cleaned);
     items = cleaned;
-    if (dropped) renderItems();   // 空欄の行が消えた場合は表示を合わせる
+    if (dropped) renderItems(); // 空欄の行が消えた場合は表示を合わせる
     info("items-message", "保存しました");
-  } catch (e) { err("items-message", e); }
+  } catch (e) {
+    err("items-message", e);
+  }
 }
 
 // ---- 定休日 ----
@@ -159,11 +184,18 @@ function renderHolidays() {
     const span = document.createElement("span");
     span.className = "grow";
     span.textContent = d;
-    li.append(span, mkBtn("削除", () => {
-      holidays.dates = holidays.dates.filter((x) => x !== d);
-      renderHolidays();
-      saveHolidays();
-    }, "danger"));
+    li.append(
+      span,
+      mkBtn(
+        "削除",
+        () => {
+          holidays.dates = holidays.dates.filter((x) => x !== d);
+          renderHolidays();
+          saveHolidays();
+        },
+        "danger",
+      ),
+    );
     ul.appendChild(li);
   });
 }
@@ -183,7 +215,9 @@ async function saveHolidays() {
       dates: [...new Set(holidays.dates)].sort(),
     });
     info("holidays-message", "保存しました");
-  } catch (e) { err("holidays-message", e); }
+  } catch (e) {
+    err("holidays-message", e);
+  }
 }
 
 // ---- 繁忙期設定 ----
@@ -213,11 +247,17 @@ function renderBusy() {
       span.className = "grow";
       span.textContent = `${p.start} 〜 ${p.end}`;
       li.append(span);
-      li.append(mkBtn("削除", () => {
-        busyPeriods = busyPeriods.filter((x) => !(x.start === p.start && x.end === p.end));
-        renderBusy();
-        saveBusy();
-      }, "danger"));
+      li.append(
+        mkBtn(
+          "削除",
+          () => {
+            busyPeriods = busyPeriods.filter((x) => !(x.start === p.start && x.end === p.end));
+            renderBusy();
+            saveBusy();
+          },
+          "danger",
+        ),
+      );
       ul.appendChild(li);
     });
 }
@@ -245,7 +285,9 @@ async function saveBusy() {
     await db.updateBusyPeriods(STORE_ID, cleaned);
     busyPeriods = cleaned;
     info("busy-message", "保存しました");
-  } catch (e) { err("busy-message", e); }
+  } catch (e) {
+    err("busy-message", e);
+  }
 }
 
 // ---- helpers ----
@@ -267,8 +309,17 @@ function iconBtn(text, label, fn, cls) {
   b.addEventListener("click", fn);
   return b;
 }
-function info(id, t) { const e = F(id); e.className = "msg info"; e.textContent = t; }
-function err(id, e) { console.error(e); const el = F(id); el.className = "msg error"; el.textContent = e.message || "失敗しました"; }
+function info(id, t) {
+  const e = F(id);
+  e.className = "msg info";
+  e.textContent = t;
+}
+function err(id, e) {
+  console.error(e);
+  const el = F(id);
+  el.className = "msg error";
+  el.textContent = e.message || "失敗しました";
+}
 
 // ---- ログインパスワードの変更 ----
 async function onChangePassword(e) {
@@ -309,14 +360,22 @@ async function startSettings() {
   F("settings").hidden = false;
 
   let loadedBusy;
-  ({ careItemsMaster: items, holidays, busyPeriods: loadedBusy } = await db.getStoreConfig(STORE_ID));
+  ({
+    careItemsMaster: items,
+    holidays,
+    busyPeriods: loadedBusy,
+  } = await db.getStoreConfig(STORE_ID));
   holidays.weekdays = holidays.weekdays || [];
   holidays.dates = holidays.dates || [];
 
   // 期間が過ぎた繁忙期はここで取り除いて保存する
   busyPeriods = pruneExpiredBusy(loadedBusy);
   if (busyPeriods.length !== loadedBusy.length) {
-    try { await db.updateBusyPeriods(STORE_ID, busyPeriods); } catch (e) { console.error(e); }
+    try {
+      await db.updateBusyPeriods(STORE_ID, busyPeriods);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   renderItems();

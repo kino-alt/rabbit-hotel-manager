@@ -20,12 +20,20 @@ storeSelect.addEventListener("change", () => {
 // ---- メニュードロワー（左サイド） ----
 const drawer = document.getElementById("drawer");
 const overlay = document.getElementById("drawer-overlay");
-function openDrawer() { drawer.classList.add("open"); overlay.classList.add("open"); }
-function closeDrawer() { drawer.classList.remove("open"); overlay.classList.remove("open"); }
+function openDrawer() {
+  drawer.classList.add("open");
+  overlay.classList.add("open");
+}
+function closeDrawer() {
+  drawer.classList.remove("open");
+  overlay.classList.remove("open");
+}
 document.getElementById("menu-btn").addEventListener("click", openDrawer);
 document.getElementById("drawer-close").addEventListener("click", closeDrawer);
 overlay.addEventListener("click", closeDrawer);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDrawer();
+});
 
 document.getElementById("logout-btn").addEventListener("click", () => logout());
 

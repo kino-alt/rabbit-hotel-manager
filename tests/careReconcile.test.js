@@ -30,7 +30,13 @@ test("reconcileCare: 予定に増えた回数式項目を追加し、need を追
   assert.deepEqual(r.counts, { x: { need: 3, done: 0 } });
   assert.equal(r.changed, true);
 
-  const r2 = reconcileCare({ counts: { x: { need: 1, done: 0 } } }, ["x"], { x: 3 }, new Set(["x"]), false);
+  const r2 = reconcileCare(
+    { counts: { x: { need: 1, done: 0 } } },
+    ["x"],
+    { x: 3 },
+    new Set(["x"]),
+    false,
+  );
   assert.equal(r2.counts.x.need, 3);
   assert.equal(r2.changed, true);
 });
@@ -50,7 +56,10 @@ test("reconcileCare: removeUnfulfilled=true は予定外の未実施だけ消す
 test("reconcileCare: 実施済みの回数式は予定から外れても残す", () => {
   const r = reconcileCare(
     { items: {}, counts: { x: { need: 2, done: 1 } } },
-    [], {}, new Set(["x"]), true,
+    [],
+    {},
+    new Set(["x"]),
+    true,
   );
   assert.deepEqual(r.counts, { x: { need: 2, done: 1 } });
   assert.equal(r.changed, false);

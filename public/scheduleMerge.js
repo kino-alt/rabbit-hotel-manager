@@ -20,16 +20,16 @@ export function computeSchedulePatch(base, next, cur) {
   const patch = {};
 
   for (const key of KEYS) {
-    if (!next[key]) continue;   // その系統は今回の保存対象外
+    if (!next[key]) continue; // その系統は今回の保存対象外
     const b = base[key] || {};
     const n = next[key] || {};
     const c = cur[key] || {};
 
     for (const d of new Set([...Object.keys(b), ...Object.keys(n)])) {
       const userChanged = JSON.stringify(n[d]) !== JSON.stringify(b[d]);
-      if (!userChanged) continue;                                  // 利用者は触っていない
+      if (!userChanged) continue; // 利用者は触っていない
       if (JSON.stringify(n[d]) === JSON.stringify(c[d])) continue; // 既にサーバがその状態
-      patch[`${key}.${d}`] = (d in n) ? n[d] : DELETE;
+      patch[`${key}.${d}`] = d in n ? n[d] : DELETE;
     }
   }
   return patch;

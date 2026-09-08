@@ -2,8 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  normalItemsOnDay, brushUnitsOnDay, careUnitsOnDay,
-  careScheduleShape, entryToSchedules, buildEntry,
+  normalItemsOnDay,
+  brushUnitsOnDay,
+  careUnitsOnDay,
+  careScheduleShape,
+  entryToSchedules,
+  buildEntry,
 } from "../public/scheduleGrid.js";
 
 const NO_HOL = { weekdays: [], dates: [] };
@@ -60,7 +64,11 @@ test("entryToSchedules: 回数0の回数式項目は落とす", () => {
 test("buildEntry: 新規は既定ケア日に全項目を置く", () => {
   const shared = { ownerLastName: "山田", checkOutDate: "2026-09-10" };
   const card = { rabbitName: "モカ", careIds: ["nail", "brush"], brushCounts: { brush: 3 } };
-  const e = buildEntry(shared, card, null, { countableIds: new Set(["brush"]), holidays: NO_HOL, prevRabbit: null });
+  const e = buildEntry(shared, card, null, {
+    countableIds: new Set(["brush"]),
+    holidays: NO_HOL,
+    prevRabbit: null,
+  });
 
   assert.equal(e.name, "山田 モカ");
   assert.deepEqual(e.careDays, ["2026-09-09"]); // お迎え前日
@@ -78,7 +86,11 @@ test("buildEntry: 編集時は既存 careSchedule から日と割り当てを復
     careCounts: {},
     runSchedule: { "2026-09-10": 2 },
   };
-  const e = buildEntry(shared, card, null, { countableIds: new Set(), holidays: NO_HOL, prevRabbit });
+  const e = buildEntry(shared, card, null, {
+    countableIds: new Set(),
+    holidays: NO_HOL,
+    prevRabbit,
+  });
 
   assert.deepEqual(e.careDays, ["2026-09-09", "2026-09-11"]);
   assert.equal(e.itemDay.nail, "2026-09-09");
@@ -90,13 +102,23 @@ test("buildEntry: 回数式の合計が指定とズレていたら既定日に�
   const shared = { ownerLastName: "A", checkOutDate: "2026-09-10" };
   const card = { rabbitName: "x", careIds: ["brush"], brushCounts: { brush: 5 } };
   const prev = {
-    name: "A x", card, normalIds: [], brushIds: ["brush"],
+    name: "A x",
+    card,
+    normalIds: [],
+    brushIds: ["brush"],
     careDays: ["2026-09-08", "2026-09-09"],
     itemDay: {},
     brushByDay: { "2026-09-08": { brush: 1 }, "2026-09-09": { brush: 1 } }, // 合計2 ≠ 指定5
     runByDay: {},
   };
-  const e = buildEntry(shared, card, prev, { countableIds: new Set(["brush"]), holidays: NO_HOL, prevRabbit: null });
-  const total = e.careDays.reduce((n, d) => n + ((e.brushByDay[d] || {})[d ? "brush" : ""] || 0), 0);
+  const e = buildEntry(shared, card, prev, {
+    countableIds: new Set(["brush"]),
+    holidays: NO_HOL,
+    prevRabbit: null,
+  });
+  const total = e.careDays.reduce(
+    (n, d) => n + ((e.brushByDay[d] || {})[d ? "brush" : ""] || 0),
+    0,
+  );
   assert.equal(total, 5);
 });
