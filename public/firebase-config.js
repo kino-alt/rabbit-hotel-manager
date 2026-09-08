@@ -5,7 +5,9 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -50,4 +52,18 @@ export function currentStoreName() {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const firestore = getFirestore(app);
+
+// オフライン永続化つきで Firestore を初期化する。
+// ホテルの電波が弱くても、直前に読んだデータは表示でき、
+// スワイプ等の書き込みは復帰時に自動再送される（複数タブ対応）。
+// 端末がIndexedDBを使えない場合（プライベートブラウズ等）はメモリのみにフォールバック。
+export const firestore = (() => {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch (e) {
+    console.warn("オフライン永続化を有効にできませんでした（メモリキャッシュで継続）", e);
+    return initializeFirestore(app, {});
+  }
+})();

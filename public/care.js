@@ -6,6 +6,7 @@ import * as dr from "./dailyRecord.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
 import { todayISO, addDays, formatJP, countableIdSet, careOnDate, isStayEnded } from "./schedule.js";
 import { rabbitScheduleTableHTML } from "./overviewView.js";
+import { notifyWriteError } from "./toast.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -381,9 +382,8 @@ function onSetCareCount(r, itemId, done) {
   dr.setCareCount(STORE_ID, r, currentDate, itemId, done).catch(alertErr);
 }
 
-function alertErr(err) {
-  console.error(err);
-}
+// 書き込み失敗をスタッフに見せる（共通トースト）。従来は console のみで握りつぶしていた。
+const alertErr = notifyWriteError;
 function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
