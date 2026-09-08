@@ -19,6 +19,7 @@ import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
 import { enableSwipeComplete } from "./swipe.js";
 import { esc } from "./esc.js";
+import { caret } from "./icons.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -274,7 +275,12 @@ function cardHead(r, status, opts = {}) {
   });
 
   head.append(name, st, help);
-  if (expandable) head.append(spanEl("tri", open ? "▲" : "▼"));
+  if (expandable) {
+    const tri = document.createElement("span");
+    tri.className = "tri" + (open ? " open" : "");
+    tri.innerHTML = caret();
+    head.append(tri);
+  }
   return head;
 }
 
@@ -450,96 +456,11 @@ function renderCard(r, sentView) {
   body.className = "body";
 
   if (sentView) {
-    // === 送信済み分の表示（内容の確認＋取り消し） ===
-    if (sent > 0) {
-      const runSec = taskSection("ラン", `送信済み ${sent}/${needed}`);
-      for (let i = 0; i < sent; i++) {
-        const row = document.createElement("div");
-        row.className = "item";
-        const label = document.createElement("span");
-        label.className = "label";
-        label.textContent = `ラン ${i + 1}回目`;
-        const b = document.createElement("span");
-        b.className = "badge ok";
-        b.textContent = "LINE送信済み";
-        row.append(label, b);
-        // 直近の送信だけ取り消せる（送信済み回数は積み上げ式のため）
-        if (i === sent - 1) row.append(undoButton(() => onRunUndo(r, i)));
-        runSec.appendChild(row);
-      }
-      body.appendChild(runSec);
-    }
-    if (ci && ci.lineSent) {
-      const careSec = taskSection("ケア", "LINE送信済み");
-      const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
-      info.classList.add("info-pad");
-      careSec.appendChild(info);
-      careSec.appendChild(
-        rowEnd(
-          undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)),
-        ),
-      );
-      body.appendChild(careSec);
-    }
+    appendMaybe(body, buildSentRunSection(r, needed, sent));
+    appendMaybe(body, buildSentCareSection(r, ci));
   } else {
-    // === ラン ===（ランのある子だけ）
-    // 全回を並べ、送る回だけ薄い下地の行を左スワイプで送信（順番どおり）。
-    if (isRun) {
-      const runSec = taskSection("ラン", `実施 ${done}/${needed}・送信 ${sent}/${needed}`);
-      for (let i = 0; i < needed; i++) {
-        const runIsDone = i < done;
-        const runIsSent = i < sent;
-        const isNextToSend = runIsDone && !runIsSent && i === sent;
-
-        const row = document.createElement("div");
-        row.className = "item";
-
-        // チェックボックスは常に表示。実施済みは ON、送信済みは取り消し不可（無効）
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = runIsDone;
-        cb.disabled = runIsSent;
-        cb.addEventListener("change", () => onRunCheckToggle(r, i, cb.checked));
-        row.appendChild(cb);
-
-        row.appendChild(spanEl("label", `ラン ${i + 1}回目`));
-
-        if (runIsSent) {
-          row.appendChild(spanEl("run-state sent", "送信済み"));
-          row.classList.add("is-dim");
-          runSec.appendChild(row);
-        } else if (isNextToSend) {
-          // 「ラン N回目」の行に、右下寄せでスワイプ案内を入れる
-          row.appendChild(swipeNote("スワイプで完了", true));
-          runSec.appendChild(wrapSwipe(row, () => onRunSend(r, i)));
-        } else if (runIsDone) {
-          row.appendChild(spanEl("run-state", "送信待ち"));
-          runSec.appendChild(row);
-        } else {
-          runSec.appendChild(row); // 未実施：チェックのみ
-        }
-      }
-      body.appendChild(runSec);
-    }
-
-    // === ケア ===（見出し「ケア」ごと左スワイプで送信。以前と同じ挙動）
-    if (ci && !ci.lineSent) {
-      const careSec = taskSection("ケア", ci.careDone ? "送信待ち" : "未完了");
-      if (ci.careDone) {
-        const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
-        info.classList.add("info-pad");
-        careSec.appendChild(info);
-        careSec.appendChild(swipeNote("スワイプで完了"));
-        body.appendChild(
-          wrapSwipe(careSec, () =>
-            dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError),
-          ),
-        );
-      } else {
-        careSec.appendChild(mutedLine("ケア担当が未完了です"));
-        body.appendChild(careSec);
-      }
-    }
+    appendMaybe(body, buildRunSection(r, needed, done, sent));
+    appendMaybe(body, buildCareSection(r, ci));
   }
 
   if (!body.hasChildNodes()) {
@@ -548,6 +469,105 @@ function renderCard(r, sentView) {
 
   host.appendChild(body);
   return card;
+}
+
+function appendMaybe(parent, node) {
+  if (node) parent.appendChild(node);
+}
+
+// === 展開カードの本体セクション（renderCard から切り出し。挙動は変更なし） ===
+
+// 送信済みビュー：ラン（各回に「LINE送信済み」バッジ、直近だけ取り消し可）
+function buildSentRunSection(r, needed, sent) {
+  if (sent <= 0) return null;
+  const runSec = taskSection("ラン", `送信済み ${sent}/${needed}`);
+  for (let i = 0; i < sent; i++) {
+    const row = document.createElement("div");
+    row.className = "item";
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = `ラン ${i + 1}回目`;
+    const b = document.createElement("span");
+    b.className = "badge ok";
+    b.textContent = "LINE送信済み";
+    row.append(label, b);
+    // 直近の送信だけ取り消せる（送信済み回数は積み上げ式のため）
+    if (i === sent - 1) row.append(undoButton(() => onRunUndo(r, i)));
+    runSec.appendChild(row);
+  }
+  return runSec;
+}
+
+// 送信済みビュー：ケア（実施項目の一覧＋取り消し）
+function buildSentCareSection(r, ci) {
+  if (!ci || !ci.lineSent) return null;
+  const careSec = taskSection("ケア", "LINE送信済み");
+  const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
+  info.classList.add("info-pad");
+  careSec.appendChild(info);
+  careSec.appendChild(
+    rowEnd(
+      undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)),
+    ),
+  );
+  return careSec;
+}
+
+// 通常ビュー：ラン（全回を並べ、送る回だけ薄い下地の行を左スワイプで送信）
+function buildRunSection(r, needed, done, sent) {
+  if (needed <= 0) return null;
+  const runSec = taskSection("ラン", `実施 ${done}/${needed}・送信 ${sent}/${needed}`);
+  for (let i = 0; i < needed; i++) {
+    const runIsDone = i < done;
+    const runIsSent = i < sent;
+    const isNextToSend = runIsDone && !runIsSent && i === sent;
+
+    const row = document.createElement("div");
+    row.className = "item";
+
+    // チェックボックスは常に表示。実施済みは ON、送信済みは取り消し不可（無効）
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = runIsDone;
+    cb.disabled = runIsSent;
+    cb.addEventListener("change", () => onRunCheckToggle(r, i, cb.checked));
+    row.appendChild(cb);
+
+    row.appendChild(spanEl("label", `ラン ${i + 1}回目`));
+
+    if (runIsSent) {
+      row.appendChild(spanEl("run-state sent", "送信済み"));
+      row.classList.add("is-dim");
+      runSec.appendChild(row);
+    } else if (isNextToSend) {
+      // 「ラン N回目」の行に、右下寄せでスワイプ案内を入れる
+      row.appendChild(swipeNote("スワイプで完了", true));
+      runSec.appendChild(wrapSwipe(row, () => onRunSend(r, i)));
+    } else if (runIsDone) {
+      row.appendChild(spanEl("run-state", "送信待ち"));
+      runSec.appendChild(row);
+    } else {
+      runSec.appendChild(row); // 未実施：チェックのみ
+    }
+  }
+  return runSec;
+}
+
+// 通常ビュー：ケア（見出し「ケア」ごと左スワイプで送信。以前と同じ挙動）
+function buildCareSection(r, ci) {
+  if (!ci || ci.lineSent) return null;
+  const careSec = taskSection("ケア", ci.careDone ? "送信待ち" : "未完了");
+  if (ci.careDone) {
+    const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
+    info.classList.add("info-pad");
+    careSec.appendChild(info);
+    careSec.appendChild(swipeNote("スワイプで完了"));
+    return wrapSwipe(careSec, () =>
+      dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError),
+    );
+  }
+  careSec.appendChild(mutedLine("ケア担当が未完了です"));
+  return careSec;
 }
 
 // ラベル（種別名＋状況）付きのセクション箱を作る
