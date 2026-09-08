@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>店舗の初期登録｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar"><h1>店舗の初期登録</h1></header>
+
+    <div class="msg info">
+      <b>store_1（本店）</b>と<b>store_2（豊中店）</b>を Firestore に作成します。<br />
+      ・ケア項目マスタ … 現在の <code>stores/main</code> と同じ内容をコピー（無ければ既定の4項目）<br />
+      ・本店の定休日 … 毎週<b>火・木</b>／豊中店の定休日 … 毎週<b>水・木</b><br />
+      ・TTLポリシー設定用に、各店舗へ仮のうさぎ文書（<code>expireAt</code> 付き）を1件ずつ作成<br />
+      何度実行しても店舗設定は同じ内容で上書きされます（パスワードには触れません）。
+    </div>
+
+    <form id="seed-form" class="stack">
+      <label class="inline">
+        <input type="checkbox" id="make-placeholder" checked />
+        TTL設定用の仮うさぎを作成する
+      </label>
+      <button type="submit" class="primary">店舗を登録する</button>
+      <div id="message"></div>
+    </form>
+
+    <div class="msg info" style="margin-top:16px">
+      登録後：Firebaseコンソール → Firestore →「TTL」で、コレクション <code>rabbits</code>、
+      フィールド <code>expireAt</code> のポリシーを有効化してください。
+    </div>
+  </div>
+
+  <script type="module" src="seed-stores.js"></script>
+</body>
+</html>

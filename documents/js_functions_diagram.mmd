@@ -1,0 +1,106 @@
+classDiagram
+    class authJs["auth.js(共通ロジック層)"] {
+      login() ― パスワード照合し匿名ログイン、roleを返す
+      signInAnonymously() ― 匿名ログインを実行する
+      requireAuth() ― 各画面の認証ガード(未ログインならlogin.htmlへ)
+      getRole() / isManager() ― 保存したroleを参照する
+      logout() ― ログアウトしてlogin.htmlへ戻す
+    }
+    class scheduleJs["schedule.js(共通ロジック層)"] {
+      calculateDefaultCareDate() ― お迎え日から逆算しケア日を決める
+      calculatePhotoNeeded() ― 写真が必要な日か自動判定する
+      日付ユーティリティ ― toISO/parseISO/addDays/eachDate/formatJP/isHoliday
+    }
+    class dailyRecordJs["dailyRecord.js(共通ロジック層)"] {
+      getOrCreateDailyRecord(storeId,rabbit,date,holidays) ― 当日の記録が無ければ作る
+      updateCareItem(storeId,rabbit,date,itemId,done) ― ケア項目1つの実施を記録する
+      addCareItemForToday(storeId,rabbit,date,itemId) ― その日だけ項目を追加する
+      removeCareItemForToday(storeId,rabbit,date,itemId) ― その日だけ項目を即時削除する
+      markCareLineSent(storeId,rabbit,date) ― ケアのLINE送信済みにする
+      updateRunCheck(storeId,rabbit,date,index,done) ― ランの実施回数を更新する
+      markRunLineSent(storeId,rabbit,date,index) ― ラン1回分を送信済みにする
+      updatePhotoStatus(storeId,rabbit,date,field,value) ― 写真の状態を更新する
+    }
+    class dbJs["db.js(データアクセス層)"] {
+      getConfig() ― 共通/店長パスワードを取得する
+      saveRabbit() ― うさぎ情報を保存する(新規/更新)
+      getRabbit() ― うさぎ文書を一度だけ取得する
+      subscribeRabbit() ― うさぎ文書1件をリアルタイム購読する
+      subscribeActiveRabbits() ― 非表示でないうさぎ一覧を購読する
+      getAllRabbits() ― 非表示分も含め全うさぎを取得する
+      writeDailyRecord() ― dailyRecordsフィールドを部分更新する
+      bumpTotals() ― careTotals/runTotalを増減する
+      deleteCareItemForDate() ― その日のケア項目を1つ削除する
+      writeSchedules() ― 予定(care/run/photo)をまとめて保存する
+      getCareItemsMaster() / updateCareItemsMaster() ― ケア項目マスタ(配列)
+      getHolidays() / updateHolidays() ― 定休日
+      updatePhotoScheduleRange() ― 複数日の写真要否を編集する
+      hideRabbit() / unhideRabbit() ― 非表示にしTTL起点を記録/取り消す
+      initConfig() / initStore() ― 初期セットアップ用
+    }
+    class loginJs["login.js(画面層)"] {
+      onLoginSubmit() ― パスワード送信を受け取る
+    }
+    class mainJs["main.js(画面層)"] {
+      requireAuth()/isManager() ― 店長なら店長設定リンクを表示
+      logout() ― ログアウトボタン
+    }
+    class careJs["care.js(画面層)"] {
+      onCheckboxClick() ― チェック操作を受け取る
+      onAddItemForToday() ― 追加(セレクト)を受け取る
+      onDeleteItemForToday() ― 削除(ボタン)を受け取る
+      onSwipeComplete() ― LINE送信ボタンを受け取る
+      onPhotoCheck() ― 写真チェックを受け取る
+      render() ― 画面を表示し購読を開始する
+    }
+    class runJs["run.js(画面層)"] {
+      onRunCheckToggle() ― ラン実施チェックを受け取る
+      onRunSwipeSent() ― ラン送信ボタンを受け取る
+      onPhotoCheck() ― 写真チェックを受け取る
+      render() ― 画面を表示し購読を開始する
+    }
+    class registerJs["register.js(画面層)"] {
+      onSubmit() ― 登録/編集フォームを受け取る
+      onAddAnotherRabbit() ― 同グループで続けて登録する
+      onSaveSchedule() ― 宿泊全体の予定を保存する
+      onHideRabbit() ― 宿泊終了(非表示)にする
+    }
+    class overviewJs["overview.js(画面層)"] {
+      render() ― 一覧を表示する
+      getCellStatus() ― 予定か実績かを判定し表示する
+    }
+    class adminJs["admin.js(画面層)"] {
+      onUpdateCareItemsMaster() ― マスタ編集を受け取る
+      onUpdateHolidays() ― 定休日編集を受け取る
+      onUpdatePhotoScheduleRange() ― 写真の一括編集を受け取る
+    }
+    class historyJs["history.js(画面層)"] {
+      loadPastRecords() ― 過去記録の参照を受け取る
+    }
+    class setupJs["setup.js(画面層・初回のみ)"] {
+      onSubmit() ― 初期値の投入を受け取る
+    }
+
+    loginJs --> authJs
+    mainJs --> authJs
+    careJs --> authJs
+    runJs --> authJs
+    registerJs --> authJs
+    overviewJs --> authJs
+    adminJs --> authJs
+    historyJs --> authJs
+    setupJs --> authJs
+    authJs --> dbJs
+    careJs --> dailyRecordJs
+    runJs --> dailyRecordJs
+    careJs --> dbJs
+    runJs --> dbJs
+    registerJs --> scheduleJs
+    overviewJs --> scheduleJs
+    dailyRecordJs --> scheduleJs
+    dailyRecordJs --> dbJs
+    registerJs --> dbJs
+    overviewJs --> dbJs
+    adminJs --> dbJs
+    historyJs --> dbJs
+    setupJs --> dbJs

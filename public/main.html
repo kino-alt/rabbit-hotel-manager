@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>担当選択｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <button class="ghost small" id="menu-btn" aria-label="メニューを開く">☰</button>
+      <h1>ホテル一覧</h1>
+      <button class="ghost small" id="logout-btn">ログアウト</button>
+    </header>
+
+    <div class="row spread" style="margin-bottom:8px">
+      <span class="row" style="gap:0">
+        <span class="store-label">店舗：</span>
+        <select id="store-select" class="store-select"></select>
+      </span>
+      <a href="register.html" class="add-btn" aria-label="うさぎ登録" title="うさぎ登録">＋</a>
+    </div>
+    <div class="date-nav">
+      <button class="ghost" id="ov-prev" aria-label="前の週">‹</button>
+      <span class="label" id="ov-range"></span>
+      <button class="ghost" id="ov-next" aria-label="次の週">›</button>
+    </div>
+    <div class="scroll-x">
+      <table class="overview compact" id="ov-table"></table>
+    </div>
+    <p class="muted" style="font-size:12px">
+      〇＝未実施　◐＝実施済み　●＝LINE送信済み<br><span style="background:#EEF6F1">緑</span>＝宿泊中、<span style="background:#DCEDE4">濃い緑</span>＝宿泊中の定休日、<span style="background:#F1DADA">赤</span>＝定休日<br />
+      編集：うさぎ名をタップ
+    </p>
+  </div>
+
+  <div id="drawer-overlay"></div>
+  <nav id="drawer" class="drawer">
+    <div class="drawer-head">
+      <b>メニュー</b>
+      <button class="ghost small" id="drawer-close" aria-label="メニューを閉じる">✕</button>
+    </div>
+    <a href="care.html">ケア担当</a>
+    <a href="run.html">ラン担当</a>
+    <a href="history.html">過去の記録</a>
+    <a href="admin.html">設定</a>
+  </nav>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

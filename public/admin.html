@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>設定｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <a href="main.html" class="ghost small">← 戻る</a>
+      <h1>設定</h1>
+      <span class="badge" id="store-name"></span>
+    </header>
+
+    <div id="gate">
+      <div class="msg info" style="margin-bottom:12px">設定を開くにはパスワードが必要です。</div>
+      <form id="gate-form" class="panel stack">
+        <label class="field" style="margin-bottom:0">
+          <span>設定パスワード</span>
+          <input type="password" id="gate-pw" autocomplete="off" required />
+        </label>
+        <button type="submit" class="primary">開く</button>
+        <div id="gate-message"></div>
+      </form>
+    </div>
+
+    <div id="settings" hidden>
+
+      <section>
+        <h2 class="form-sec">ケア項目</h2>
+        <div class="panel">
+          <ul class="plain" id="care-items"></ul>
+          <div class="row add-row">
+            <input type="text" id="new-item" class="grow" placeholder="新しい項目名" />
+            <button id="add-item" class="small primary">追加</button>
+          </div>
+          <p class="panel-note">「回数」＝件数を数える項目（プチブラシなど）</p>
+          <div id="items-message"></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="form-sec">定休日</h2>
+        <div class="panel">
+          <p class="panel-note">毎週の休み</p>
+          <div class="chips" id="weekdays"></div>
+
+          <div class="hr-soft"></div>
+
+          <p class="panel-note">臨時の休み</p>
+          <ul class="plain" id="holiday-dates"></ul>
+          <div class="row add-row">
+            <input type="date" id="new-holiday" class="grow" />
+            <button id="add-holiday" class="small primary">追加</button>
+          </div>
+          <div id="holidays-message"></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="form-sec">繁忙期</h2>
+        <div class="panel">
+          <p class="panel-note">期間中は写真を自動登録しません</p>
+          <ul class="plain" id="busy-list"></ul>
+          <div class="row add-row">
+            <label class="field grow"><span>開始日</span><input type="date" id="busy-start" /></label>
+            <label class="field grow"><span>終了日</span><input type="date" id="busy-end" /></label>
+          </div>
+          <div class="row add-row">
+            <button id="busy-add" class="small primary">この期間を追加</button>
+          </div>
+          <div id="busy-message"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

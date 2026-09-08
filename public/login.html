@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ログイン｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar"><h1>うさぎホテル業務管理</h1></header>
+
+    <form id="login-form" class="stack">
+      <label class="field">
+        <span>パスワード</span>
+        <input type="password" id="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="primary" id="submit-btn">ログイン</button>
+      <div id="message"></div>
+    </form>
+  </div>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>

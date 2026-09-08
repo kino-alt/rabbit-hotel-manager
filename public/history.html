@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>過去の記録｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <a href="main.html" class="ghost small">← 戻る</a>
+      <h1>過去の記録</h1>
+      <span class="badge" id="store-name"></span>
+    </header>
+
+    <div class="date-nav">
+      <button class="ghost" id="prev-month" aria-label="前の月">‹</button>
+      <span class="label" id="month-label"></span>
+      <button class="ghost" id="next-month" aria-label="次の月">›</button>
+    </div>
+
+    <p class="muted" id="summary" style="font-size:12px;margin:0 0 6px"></p>
+    <div class="scroll-x">
+      <table class="overview compact" id="grid"></table>
+    </div>
+    <div id="empty" class="muted center" hidden>この月に宿泊終了したうさぎはいません</div>
+    <p class="muted" style="font-size:12px">
+      〇＝未実施　◐＝実施済み　●＝LINE送信済み<br />
+      <span style="background:#EEF6F1">緑</span>＝宿泊中、<span style="background:#DCEDE4">濃い緑</span>＝宿泊中の定休日、<span style="background:#F1DADA">赤</span>＝定休日<br />
+      宿泊終了したうさぎの記録（閲覧のみ）。
+    </p>
+  </div>
+
+  <script type="module" src="history.js"></script>
+</body>
+</html>

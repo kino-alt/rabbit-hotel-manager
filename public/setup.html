@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>初期セットアップ｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar"><h1>初期セットアップ</h1></header>
+
+    <div class="msg info">
+      Firebaseプロジェクトを作った直後に1回だけ実行します。<br />
+      共通パスワード（全員のログイン用）・設定パスワード（設定画面用）・ケア項目マスタ・定休日の初期値をFirestoreに書き込みます。<br />
+      パスドの変更後はこのページを再実行しても<b>パスワードだけは上書きされません</b>（Firebaseコンソールから変更してください）。
+    </div>
+
+    <form id="setup-form" class="stack">
+      <label class="field">
+        <span>共通パスワード（スタッフ用）</span>
+        <input type="text" id="common-pw" required />
+      </label>
+      <label class="field">
+        <span>設定パスワード（設定画面を開くとき用）</span>
+        <input type="text" id="manager-pw" required />
+      </label>
+      <label class="field">
+        <span>定休日（曜日／複数可）</span>
+        <span class="row" style="flex-wrap:wrap">
+          <label class="inline"><input type="checkbox" value="0" class="wd" />日</label>
+          <label class="inline"><input type="checkbox" value="1" class="wd" />月</label>
+          <label class="inline"><input type="checkbox" value="2" class="wd" />火</label>
+          <label class="inline"><input type="checkbox" value="3" class="wd" />水</label>
+          <label class="inline"><input type="checkbox" value="4" class="wd" />木</label>
+          <label class="inline"><input type="checkbox" value="5" class="wd" />金</label>
+          <label class="inline"><input type="checkbox" value="6" class="wd" />土</label>
+        </span>
+      </label>
+      <label class="field">
+        <span>ケア項目マスタ（1行1項目）</span>
+        <textarea id="care-items" rows="6">爪切り
+ブラッシング
+お耳ケア
+お尻ケア</textarea>
+      </label>
+      <button type="submit" class="primary">セットアップを実行</button>
+      <div id="message"></div>
+    </form>
+  </div>
+
+  <script type="module" src="setup.js"></script>
+</body>
+</html>

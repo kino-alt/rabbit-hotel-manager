@@ -1,0 +1,37 @@
+rules_version = '2';
+
+// うさぎホテル業務管理アプリ
+// 方針：匿名認証でログイン済みのユーザーだけが読み書きできる。
+//       パスワード画面はあくまで入口。技術的な防御はこのルールで行う。
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // 全店舗共通の設定（パスワード）
+    // get：ログイン後のパスワード照合に必要
+    // 作成：まだ存在しない場合のみ（setup.html の初回実行）
+    // 更新・削除：クライアントからは不可（変更はFirebaseコンソールでおこなうこと）
+    match /config/{doc} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && !exists(/databases/$(database)/documents/config/$(doc));
+      allow update, delete: if false;
+    }
+
+    // 店舗設定
+    match /stores/{storeId} {
+      allow get, list, write: if signedIn();
+
+      // うさぎの宿泊記録
+      // list を明示的に許可：ケア/ラン/一覧画面は subscribeActiveRabbits() で
+      // コレクションをクエリ購読するため、get だけでは一覧取得が弾かれる。
+      match /rabbits/{rabbitId} {
+        allow get, list, write: if signedIn();
+      }
+    }
+  }
+}

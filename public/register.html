@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>うさぎ登録｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <a href="main.html" class="ghost small">← 戻る</a>
+      <h1 id="title">うさぎ登録</h1>
+      <span></span>
+    </header>
+
+    <!-- STEP 1：飼い主・日程（共通） + うさぎ（複数可） -->
+    <form id="rabbit-form" class="stack">
+      <h2 class="form-sec">日程・送迎</h2>
+      <div class="row">
+        <label class="field grow"><span>お預かり日 <b class="req">必須</b></span><input type="date" id="checkInDate" required /></label>
+        <label class="field grow"><span>お迎え日 <b class="req">必須</b></span><input type="date" id="checkOutDate" required /></label>
+      </div>
+      <div class="field">
+        <span>送迎<span class="hint">あるものにチェック・任意</span></span>
+        <div class="row">
+          <label class="inline"><input type="checkbox" id="transportDropoff" /> 預かり時</label>
+          <label class="inline"><input type="checkbox" id="transportPickup" /> お迎え時</label>
+        </div>
+      </div>
+
+      <h2 class="form-sec">飼い主</h2>
+      <label class="field"><span>苗字 <b class="req">必須</b></span><input type="text" id="ownerLastName" required placeholder="例：山田" /></label>
+
+      <h2 class="form-sec">うさぎ</h2>
+      <div id="rabbit-cards" class="stack"></div>
+      <button type="button" class="ghost" id="add-rabbit-card">＋ うさぎを追加</button>
+
+      <div id="message"></div>
+      <div class="row">
+        <button type="submit" class="primary" id="next-btn">次へ（予定の確認）</button>
+      </div>
+    </form>
+
+    <!-- STEP 2：予定表（メイン） -->
+    <section id="schedule-step" hidden class="stack">
+      <div class="row spread">
+        <h2 style="font-size:15px;margin:0">ケア・ラン実施日登録</h2>
+        <button type="button" class="ghost small" id="back-btn">← 入力へ戻る</button>
+      </div>
+
+      <div id="remote-change" class="msg info" hidden>
+        <span id="remote-change-text">このうさぎの予定が他の端末で更新されました。</span>
+        <button type="button" class="small ghost" id="remote-reload" style="margin-left:8px">最新の予定で作り直す</button>
+      </div>
+
+      <p class="sched-hint"><b>＋</b>ケアする日を足す　<b>✓</b>ケアあり（数字＝件数）</p>
+      <p class="sched-hint">ラン回数はセルで選択</p>
+      <div id="schedule-table"></div>
+      <div id="care-breakdown" hidden></div>
+
+      <div class="row">
+        <button type="button" class="primary" id="save-btn">登録する</button>
+      </div>
+      <div id="schedule-message"></div>
+
+      <div id="edit-only" hidden>
+        <hr style="margin:20px 0" />
+        <button type="button" class="danger" id="hide-btn">この宿泊を終了（非表示にする）</button>
+        <p class="muted" style="font-size:12px">非表示から6ヶ月後にFirestoreが自動削除します。</p>
+      </div>
+    </section>
+
+    <!-- 登録完了後 -->
+    <div id="done-actions" hidden class="stack" style="margin-top:16px">
+      <div class="msg info" id="done-message"></div>
+      <a href="main.html" style="display:block;background:var(--accent);color:#fff;text-decoration:none;padding:10px 12px;border-radius:8px;text-align:center;font-weight:bold">一覧へ戻る</a>
+      <button type="button" class="ghost" id="add-another">＋ 続けて登録（同じ飼い主）</button>
+    </div>
+  </div>
+
+  <script type="module" src="register.js"></script>
+</body>
+</html>

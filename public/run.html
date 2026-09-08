@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ラン担当｜うさぎホテル業務管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <a href="main.html" class="ghost small">← 戻る</a>
+      <h1>ラン担当</h1>
+      <span class="badge" id="store-name"></span>
+    </header>
+
+    <div class="date-nav">
+      <button class="ghost" id="prev-day" aria-label="前日">‹</button>
+      <span class="label" id="day-label"></span>
+      <button class="ghost" id="next-day" aria-label="翌日">›</button>
+    </div>
+
+    <div id="list" class="stack"></div>
+    <div id="empty" class="muted center" hidden>表示するうさぎはいません</div>
+  </div>
+
+  <div id="sched-overlay" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <div class="row spread modal-head">
+        <b id="sched-title"></b>
+        <button class="ghost small" id="sched-close" aria-label="閉じる">✕</button>
+      </div>
+      <div id="sched-body"></div>
+      <p class="muted modal-legend">〇＝未実施　◐＝実施済み　●＝LINE送信済み</p>
+    </div>
+  </div>
+
+  <script type="module" src="run.js"></script>
+</body>
+</html>
