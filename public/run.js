@@ -19,7 +19,7 @@ import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
 import { enableSwipeComplete } from "./swipe.js";
 import { esc } from "./esc.js";
-import { caret } from "./icons.js";
+import { icon } from "./icons.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -249,38 +249,46 @@ function buildNote(r) {
   return n;
 }
 
-// ラン担当・全カード共通のヘッダー。並びは常に
-//   [うさぎ名] [状況] [?] [▼/▲（展開カードのみ）]
+// ラン担当・全カード共通のヘッダー。構造は
+//   <div.head> <button.head-main>[名前][状況][キャレット]</button> <button.help>?</button> </div>
+// 展開トグルと「予定を見る」を別々のボタンにしてボタンの入れ子を避ける。
 // 「状況」は種別＋状態を必ず同じ位置・同じ体裁で示す（見る場所を固定するため）。
-// 追加のコントロール（撮影チェック・取り消しボタン）は呼び出し側で末尾に append する。
+// 追加のコントロール（撮影チェック・取り消しボタン）は呼び出し側で head の末尾に append する。
 function cardHead(r, status, opts = {}) {
-  const { sent = false, expandable = false, open = false } = opts;
-  const head = document.createElement(expandable ? "button" : "div");
-  if (expandable) head.type = "button";
+  const { sent = false, expandable = false, open = false, onToggle } = opts;
+
+  const head = document.createElement("div");
   head.className = "head";
+
+  const main = document.createElement(expandable ? "button" : "div");
+  if (expandable) main.type = "button";
+  main.className = "head-main";
 
   const name = spanEl("name grow", `${r.ownerLastName || ""} ${r.rabbitName || ""}`);
   // status は文字列でも DOM ノードでもよい（写真カードは撮影チェックをここに入れる）
   const st =
     status instanceof Node ? status : spanEl("count" + (sent ? " count-sent" : ""), status || "");
+  main.append(name, st);
+  if (expandable) {
+    const tri = document.createElement("span");
+    tri.className = "tri" + (open ? " open" : "");
+    tri.innerHTML = icon("caret");
+    main.append(tri);
+  }
+  if (expandable && onToggle) main.addEventListener("click", onToggle);
+  head.append(main);
 
-  const help = document.createElement("span");
+  const help = document.createElement("button");
+  help.type = "button";
   help.className = "help";
-  help.setAttribute("role", "button");
   help.setAttribute("aria-label", "この子の予定を見る");
-  help.textContent = "?";
+  help.innerHTML = icon("help");
   help.addEventListener("click", (e) => {
     e.stopPropagation();
     openSchedule(r);
   });
+  head.append(help);
 
-  head.append(name, st, help);
-  if (expandable) {
-    const tri = document.createElement("span");
-    tri.className = "tri" + (open ? " open" : "");
-    tri.innerHTML = caret();
-    head.append(tri);
-  }
   return head;
 }
 
@@ -440,10 +448,10 @@ function renderCard(r, sentView) {
     sent: isAllSent(r),
     expandable: true,
     open: expanded.has(r.id),
-  });
-  head.addEventListener("click", () => {
-    expanded.has(r.id) ? expanded.delete(r.id) : expanded.add(r.id);
-    render();
+    onToggle: () => {
+      expanded.has(r.id) ? expanded.delete(r.id) : expanded.add(r.id);
+      render();
+    },
   });
   host.appendChild(head);
 

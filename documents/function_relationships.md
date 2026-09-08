@@ -1,4 +1,17 @@
-# 関数構成・呼び出し関係(最終設計・改訂3)
+# 関数構成・呼び出し関係(最終設計・改訂4)
+
+> 初期実装時点の資料。改訂4（2026-09）の要点を以下に反映済み。詳細な現状は `README.md`。
+
+## 改訂4(2026-09・運用開始後の見直し)
+
+- **認証**：匿名認証を廃止。`auth.login()` は `signInWithEmailAndPassword(STAFF_EMAIL, 入力パスワード)`。
+  `signInAnonymously()` は削除。setup/seed は `requireLogin()`（先にログインしてから開く）。
+  role の概念は縮小（ログインは常に "staff"。設定画面は `verifyManagerPassword()` が別ゲート）。
+  `auth.changeStaffPassword()` を追加（設定画面からログインパスワード変更）。
+- **廃止**：`db.bumpTotals()` と `careTotals` / `runTotal`（どの画面も未参照・非アトミック）。
+- **切り出し（純粋モジュール、テスト対象）**：`scheduleMerge.js`（3-wayマージ）、`careReconcile.js`
+  （`reconcileCare` / `computeAllDone`）、`esc.js`、`swipe.js`、`icons.js`、`toast.js`、`vendor.js`（Firebase SDK の唯一の入口）。
+- `register.js`：登録時に `registeredBy`（担当スタッフ名）を入力・保存。
 
 ## 改訂内容
 
@@ -57,11 +70,12 @@
 
 | 関数名 | 役割 | 呼び出し元 |
 |---|---|---|
-| `login(inputPassword)` | 先に匿名ログインしてから`db.getConfig()`で`config/common`を読み、入力パスワードを`managerPassword`→`commonPassword`の順に照合。一致すれば`{ ok: true, role }`(role は "manager" / "staff")を返し、`localStorage`に role を保存。不一致ならログアウトして`{ ok: false }` | login.js |
-| `signInAnonymously()` | Firebase Authenticationで匿名ログインを行う(スタッフからは見えない裏側の処理) | auth.js内部 / setup.js |
-| `requireAuth(onReady)` | 各画面の先頭で呼ぶ。`onAuthStateChanged`で未ログインを検知したら`login.html`へ飛ばし、ログイン済みなら`onReady(user)`を実行 | login.js以外の全画面 |
-| `getRole()` / `isManager()` | `localStorage`の role を参照。`isManager()`は店長かどうかの真偽値 | main.js / admin.js |
-| `logout()` | role を消して`signOut`し、`login.html`へ戻す | main.js |
+| `login(inputPassword)` | `signInWithEmailAndPassword(STAFF_EMAIL, inputPassword)`。成功なら `{ ok: true }`、`auth/*` エラー（パスワード違い等）なら `{ ok: false }` | login.js |
+| `verifyManagerPassword(pw)` | `db.getConfig()` で `config/common.managerPassword` を読み、設定画面を開くときの2段階目を照合 | admin.js |
+| `changeStaffPassword(cur, next)` | 今のパスワードで再認証してから `updatePassword`。設定画面の「ログインパスワード」欄 | admin.js |
+| `requireAuth(onReady)` | 各画面の先頭で呼ぶ。`onAuthStateChanged` で未ログイン（または匿名）を検知したら `login.html` へ飛ばし、ログイン済みなら `onReady(user)` を実行 | login.js以外の全画面 |
+| `requireLogin(onReady, onMissing)` | setup / seed-stores 用。ログイン済みなら `onReady`、未ログインなら `onMissing`（先に login.html でログインする案内） | setup.js / seed-stores.js |
+| `logout()` | `signOut` して `login.html` へ戻す | main.js |
 
 ## schedule.js(共通ロジック層)
 
@@ -94,12 +108,12 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 |---|---|---|
 | `getOrCreateDailyRecord(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | その日の記録が無ければ予定からコピーして新規作成。既にあれば、ラン回数と「予定に増えたケア項目」を追随させる(実施済みは保持、**削除はしない**)。写真要否は`photoSchedule`優先、無ければ`calculatePhotoNeeded()` | care.js / run.js(`ensureRecords`) |
 | `reconcileDailyRecord(storeId, rabbit, date, countableIds)` | **既存の**当日記録を予定へ完全に合わせる(増えた項目は追加、外れた未実施項目は削除、実施済み・done・lineSentは保持)。記録が無い日は何もしない | register.js(保存直後・変えた日だけ) |
-| `updateCareItem` / `setCareCount` | ケア項目1つの実施(チェック / 回数)を更新し全完了を自動判定。差分を`db.bumpTotals()`で`careTotals`へ | care.js |
+| `updateCareItem` / `setCareCount` | ケア項目1つの実施(チェック / 回数)を更新し全完了を自動判定 | care.js |
 | `addCareToday` / `removeCareToday` / `setCareNeedToday` | ケア担当「項目を編集」。その日の**予定**(`db.patchScheduleDay()` = `arrayUnion`/`arrayRemove` 等)と**当日記録**の両方を直す | care.js |
 | `addCareItemForToday` / `removeCareItemForToday` | その日の**当日記録だけ**にケア項目を足す/消す(予定は変えない) | dailyRecord.js内部(上記から) |
 | `setCareDone(storeId, rabbit, date, value)` | ケア:「ケア完了」(◐)の設定/取消 | care.js |
 | `markCareLineSent` / `unmarkCareLineSent` | ケア:LINE送信済み(●)の設定/取消 | run.js |
-| `updateRunCheck` / `markRunLineSent` / `unmarkRunLineSent` | ランの実施回数・LINE送信済みを更新。実施差分は`db.bumpTotals()`で`runTotal`へ | run.js |
+| `updateRunCheck` / `markRunLineSent` / `unmarkRunLineSent` | ランの実施回数・LINE送信済みを更新 | run.js |
 | `updatePhotoStatus(storeId, rabbit, date, field, value)` | 写真の`needed`/`taken`/`sent`のいずれかを更新 | run.js |
 
 ## db.js(データアクセス層)
@@ -115,7 +129,6 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 | `getAllRabbits(storeId)` | 非表示分も含めた全うさぎを一度だけ取得 | history.js（`hiddenAt`ありだけに絞って月ごと表示） |
 | `writeDailyRecord(storeId, rabbitId, date, data)` | `dailyRecords.{date}`をマージ書き込み | dailyRecord.js |
 | `patchRabbit(storeId, rabbitId, fieldPatch)` | うさぎ文書の field path をまとめて`updateDoc`する低レベル関数 | dailyRecord.js(`reconcileDailyRecord`) |
-| `bumpTotals(storeId, rabbitId, { careItemId, careDelta, runDelta })` | 累計(`careTotals` / `runTotal`)を`increment`で増減 | dailyRecord.js |
 | `deleteCareItemForDate` / `deleteCareCountForDate` | その日の当日記録から1項目を`deleteField()`で削除 | dailyRecord.js |
 | `patchScheduleDay(storeId, rabbitId, ops)` | 予定を1項目/1日単位で更新。`addCareItem`/`removeCareItem`は`arrayUnion`/`arrayRemove`、`setCareCount`/`setRunCount`は field path | dailyRecord.js(`addCareToday`ほか) |
 | `writeSchedulesMerge(storeId, rabbitId, base, next)` | 登録画面の保存。`runTransaction`内で最新値を読み、「利用者が変えた ∧ サーバがまだその値でない」日だけを書く3-wayマージ。戻り値は書き込んだ field path 配列 | register.js(`onSave`) |
@@ -140,8 +153,7 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 ```
 login.js の onLoginSubmit()
     → auth.js の login(inputPassword)
-        → auth.js の signInAnonymously()(先に匿名ログイン)
-        → db.js の getConfig()(config/common を読み、パスワード照合して role を決定)
+        → signInWithEmailAndPassword(STAFF_EMAIL, inputPassword)
     → 成功なら main.html へ遷移
 ```
 
@@ -160,8 +172,8 @@ care.js / run.js / overview.js / register.js / admin.js / history.js / main.js
 care.js の onCheckboxClick()
     → dailyRecord.js の updateCareItem(STORE_ID, rabbit, date, itemId, done)
         → db.js の writeDailyRecord()(dailyRecords.{date}.care を部分更新)
-        → db.js の bumpTotals()(careTotals を +1 / -1)
-            → (他画面が subscribeActiveRabbits() で購読中のため自動的に反映される)
+            → (他画面が購読中のため自動的に反映される)
+    → 失敗時は toast.js の notifyWriteError() で画面に通知
 ```
 
 **例:うさぎを新規登録する**
@@ -218,7 +230,6 @@ history.js
 | 操作 | 競合耐性 |
 |---|---|
 | ケア/ラン実施チェック(`writeDailyRecord` merge) | フィールド単位マージ。別項目の同時更新は安全 |
-| 累計(`bumpTotals` = `increment`) | アトミック |
 | ケア担当「項目を編集」(`patchScheduleDay`) | `arrayUnion`/`arrayRemove`。同じ日に別項目を足しても取りこぼさない |
 | 登録画面の保存(`writeSchedulesMerge`) | `runTransaction` ＋ 3-wayマージ(base / server / next)。別の日・同じ結論には触れない |
 | `saveRabbit` のスカラー項目(氏名・日程など) | 最後の書き込みが勝つ(低リスクのため許容) |

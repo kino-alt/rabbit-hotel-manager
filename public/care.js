@@ -16,7 +16,7 @@ import { rabbitScheduleTableHTML } from "./overviewView.js";
 import { notifyWriteError } from "./toast.js";
 import { enableSwipeComplete } from "./swipe.js";
 import { esc } from "./esc.js";
-import { caret } from "./icons.js";
+import { icon } from "./icons.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -183,35 +183,40 @@ function renderCard(r) {
     );
   }
 
-  const head = document.createElement("button");
-  head.type = "button";
+  const head = document.createElement("div");
   head.className = "head";
-  head.innerHTML = `
+
+  // 展開トグル（名前・状況・キャレット）。独立した <button> にして、
+  // その隣に「予定を見る」ボタンを置く（ボタンの入れ子を避ける）。
+  const main = document.createElement("button");
+  main.type = "button";
+  main.className = "head-main";
+  main.innerHTML = `
     <span class="name grow">${esc(r.ownerLastName || "")} ${esc(r.rabbitName || "")}</span>
     <span class="count">${careDone ? "実施済み" : `ケア ${doneCount}/${total}`}</span>`;
+  const tri = document.createElement("span");
+  tri.className = "tri" + (expanded.has(r.id) ? " open" : "");
+  tri.innerHTML = icon("caret");
+  main.appendChild(tri);
+  main.addEventListener("click", () => {
+    if (expanded.has(r.id)) expanded.delete(r.id);
+    else expanded.add(r.id);
+    render();
+  });
+  head.appendChild(main);
 
   // 「?」＝この子の予定をオーバーレイで見る（ラン担当と同じ）
-  const help = document.createElement("span");
+  const help = document.createElement("button");
+  help.type = "button";
   help.className = "help";
-  help.setAttribute("role", "button");
   help.setAttribute("aria-label", "この子の予定を見る");
-  help.textContent = "?";
+  help.innerHTML = icon("help");
   help.addEventListener("click", (e) => {
     e.stopPropagation();
     openSchedule(r);
   });
   head.appendChild(help);
 
-  const tri = document.createElement("span");
-  tri.className = "tri" + (expanded.has(r.id) ? " open" : "");
-  tri.innerHTML = caret();
-  head.appendChild(tri);
-
-  head.addEventListener("click", () => {
-    if (expanded.has(r.id)) expanded.delete(r.id);
-    else expanded.add(r.id);
-    render();
-  });
   host.appendChild(head);
 
   if (r.note) {

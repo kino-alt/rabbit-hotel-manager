@@ -4,17 +4,15 @@
 // firebaseConfig 自体はブラウザに公開されても問題ありません。実際のアクセス制御は
 // セキュリティルール（本物のメール/パスワードでログイン済みか）と App Check で行います。
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
+  initializeApp,
   initializeAppCheck,
   ReCaptchaEnterpriseProvider,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
+  getAuth,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "./vendor.js";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {

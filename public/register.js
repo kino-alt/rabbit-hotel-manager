@@ -556,6 +556,8 @@ async function onSave() {
     }
 
     if (!groupId) groupId = newGroupId();
+    const registeredBy = F("registeredBy").value.trim();
+    if (registeredBy) localStorage.setItem("lastStaffName", registeredBy);
     for (const e of entries) {
       await db.saveRabbit(STORE_ID, {
         ...shared,
@@ -563,6 +565,7 @@ async function onSave() {
         isFirstTime: e.card.isFirstTime,
         note: e.card.note,
         groupId,
+        registeredBy: registeredBy || null,
         ...entryToSchedules(e),
       });
     }
@@ -631,9 +634,11 @@ F("remote-reload").addEventListener("click", () => {
   gridDirty = false;
 });
 
-// 新規登録は1羽めのカードを最初から表示し、お預かり日を今日にしておく
+// 新規登録は1羽めのカードを最初から表示し、お預かり日を今日にしておく。
+// 「登録した人」は前回入力した名前をあらかじめ入れておく（毎回打たなくてよいように）。
 if (!editId) {
   F("checkInDate").value = todayISO();
+  F("registeredBy").value = localStorage.getItem("lastStaffName") || "";
   addCard();
 }
 
@@ -647,6 +652,8 @@ requireAuth(async () => {
     F("next-btn").textContent = "次へ（予定の編集）";
     F("save-btn").textContent = "保存";
     F("add-rabbit-card").hidden = true;
+    // 「登録した人」は登録時のみ入力。編集画面では入力欄を隠し、記録済みの名前を表示する。
+    F("registered-by-field").hidden = true;
 
     // 1回きりの getDoc ではなく購読。編集中に他端末で変わっても
     // loadedRabbit は最新に保たれ、保存は writeSchedulesMerge で差分マージされる。
@@ -669,6 +676,12 @@ requireAuth(async () => {
       F("checkOutDate").value = rabbit.checkOutDate || "";
       F("transportDropoff").checked = !!rabbit.transportDropoff;
       F("transportPickup").checked = !!rabbit.transportPickup;
+
+      if (rabbit.registeredBy) {
+        const note = F("registered-by-note");
+        note.textContent = `登録した人：${rabbit.registeredBy}`;
+        note.hidden = false;
+      }
 
       const used = new Set();
       Object.values(rabbit.careSchedule || {}).forEach((arr) =>
