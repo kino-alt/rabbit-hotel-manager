@@ -9,6 +9,9 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import { auth, STAFF_EMAIL } from "./firebase-config.js";
@@ -35,6 +38,19 @@ export async function verifyManagerPassword(inputPassword) {
   const cfg = await getConfig();
   if (!cfg || !cfg.managerPassword) return false;
   return inputPassword === cfg.managerPassword;
+}
+
+// スタッフ共有アカウントのログインパスワードを変更する（設定画面から。要・今のパスワード）。
+// 変更後、他の端末は次回のトークン更新以降 新しいパスワードでのログインが必要になる。
+export async function changeStaffPassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("ログインしていません");
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error("新しいパスワードは6文字以上にしてください");
+  }
+  // 今のパスワードで再認証してから変更（Firebase が最近のログインを要求するため）
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(STAFF_EMAIL, currentPassword));
+  await updatePassword(user, newPassword);
 }
 
 export function getRole() {
