@@ -965,12 +965,12 @@ table.overview td.rabbit-name {
    モバイルは font-size に下限があり小さくできないため、実サイズは 10px にして
    transform: scale で見た目を縮める（このアプリの他の極小表示と同じ手法）。 */
 .overview.compact td.rabbit-name {
-  padding-bottom: 11px;
+  padding-bottom: 15px;
 }
 .overview .ov-staff {
   position: absolute;
-  right: 2px;
-  bottom: 0;
+  right: 3px;
+  bottom: 3px;
   font-size: 10px;
   line-height: 1.2;
   font-weight: normal;
