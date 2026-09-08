@@ -15,7 +15,7 @@ function emptyRecord() {
   };
 }
 
-// その日の記録が無ければ careSchedule / runSchedule / photoSchedule からコピーして新規作成。
+// その日の記録が無ければ careSchedule / runSchedule ＋写真の自動判定から新規作成。
 // 既にあれば何もしない（＝複数スタッフの同時アクセスに安全）。
 export async function getOrCreateDailyRecord(
   storeId,
@@ -77,20 +77,10 @@ export async function getOrCreateDailyRecord(
 
   const runNeeded = (rabbit.runSchedule && rabbit.runSchedule[date]) || 0;
 
-  let photoNeeded;
-  const ps = rabbit.photoSchedule && rabbit.photoSchedule[date];
-  if (isBusyPeriod(date, busyPeriods))
-    photoNeeded = false; // 繁忙期は写真不要
-  else if (ps === "needed") photoNeeded = true;
-  else if (ps === "not_needed") photoNeeded = false;
-  else
-    photoNeeded = calculatePhotoNeeded(
-      date,
-      rabbit.careSchedule,
-      rabbit.runSchedule,
-      holidays,
-      busyPeriods,
-    );
+  // 繁忙期は写真不要。それ以外は自動判定（定休日でなく、ケア・ラン予定がともにない日）
+  const photoNeeded = isBusyPeriod(date, busyPeriods)
+    ? false
+    : calculatePhotoNeeded(date, rabbit.careSchedule, rabbit.runSchedule, holidays, busyPeriods);
 
   const record = {
     care: { items, counts, allDone: computeAllDone(items, counts), done: false, lineSent: false },

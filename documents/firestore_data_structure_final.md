@@ -12,6 +12,9 @@
 - `config/common` から **`commonPassword` を削除**（ログインは Firebase Auth 側）。`managerPassword` のみ残す。
 - **`careTotals` / `runTotal` と `db.bumpTotals()` を廃止**（どの画面も読んでおらず、当日記録と非アトミックにズレる原因だった）。累計が要れば `dailyRecords` から集計する。
 - うさぎ文書に **`staffName`**（登録した担当スタッフ名。登録時のみ入力）を追加。
+- **`photoSchedule` を廃止**（どこからも書き込まれておらず、`"needed"`/`"not_needed"` の分岐は死んでいた。
+  他の予定マップと値の型が違う＝混乱の元でもあった）。写真要否は当日記録 `photo.needed` と
+  自動判定 `calculatePhotoNeeded()`（＋繁忙期は不要）で決まる。
 - App Check（reCAPTCHA Enterprise）と Firestore オフライン永続化を導入。
 
 
@@ -26,7 +29,7 @@
 - 定休日を`holidays: { weekdays: [0..6], dates: ["YYYY-MM-DD", ...] }`という形に確定(毎週の定休曜日と臨時休業日の両方を扱う)
 - `config`のドキュメントIDを`config/common`に確定。フィールドは`commonPassword` / `managerPassword`
 - `dailyRecords`の具体的なキー名(`care` / `run` / `photo`)を明記
-- `photoSchedule`の値は文字列`"needed"` / `"not_needed"`。記載がない日は自動判定
+- `photoSchedule` は改訂4で廃止（書き込む画面が無く常に空だった）
 - うさぎ文書に`groupId`(+ボタン登録の紐づけ)を追加。`非表示にした日時`のフィールド名は`hiddenAt`、TTLの対象は`expireAt`(`Timestamp`型)
 
 ## 全体構造
@@ -84,11 +87,10 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
             ※自動計算はせず、飼い主の要望をもとにスタッフが手動入力
             ※記載がない日=ランの予定なし
 
-        photoSchedule(日付ごとの写真要否)
-            {日付}: "needed" | "not_needed"
-            ※記載がある日はその値を優先
-            ※記載がない日は自動計算(定休日でなく、ケア・ラン予定がともにない日は「必要」)
-            ※宿泊全体の編集画面で、複数日まとめて編集可能
+        ※（廃止）photoSchedule … 日ごとの写真要否を予定として持つ想定だったが、
+          書き込む画面が実装されず常に空だった。写真要否は当日記録 photo.needed と
+          自動計算 calculatePhotoNeeded()(定休日でなく、ケア・ラン予定がともにない日は「必要」)で決まる。
+          繁忙期は常に不要。
 
         ※（廃止）careTotals / runTotal … 宿泊全体の累計を別フィールドで持っていたが、
           どの画面も参照しておらず、当日記録の書き込みと非アトミックにズレるため改訂4で削除。
@@ -149,13 +151,13 @@ stores/{storeId}(店舗ごと。storeId は firebase-config.js の STORES。
 | 仕組み | 目的 |
 |---|---|
 | `config`と`stores`を分離 | パスワードのみ全店舗共通、それ以外(ケア項目マスタ・定休日)は店舗ごとに管理するため |
-| `careSchedule`/`runSchedule`/`photoSchedule` | 宿泊登録時に「いつ・何を」やるかをあらかじめ割り振り、日ごとに違う内容にできるようにするため |
+| `careSchedule` / `runSchedule` | 宿泊登録時に「いつ・何を」やるかをあらかじめ割り振り、日ごとに違う内容にできるようにするため |
 | `dailyRecords`が予定と別に存在 | 当日の実施状況・LINE送信状況を記録し、かつ予定にない臨機応変な追加・削除にも対応するため |
 | `hiddenAt` + Firestore TTL(`expireAt`) | 非表示後6ヶ月で自動的にデータを削除し、手動でのバックアップ作業を不要にするため |
 
 ## 画面での使い分け(未来 / 今日以降)
 
-- **まだ来ていない未来の日**:`careSchedule`/`runSchedule`/`photoSchedule`(予定)を参照して表示
+- **まだ来ていない未来の日**:`careSchedule` / `runSchedule`(予定)を参照して表示
 - **今日・過去の日**:`dailyRecords[その日]`(実績)を参照して表示
 
 ## 今回の検討で不要と判断したもの
