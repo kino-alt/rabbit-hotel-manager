@@ -12,15 +12,13 @@
 
     <div class="msg info">
       Firebaseプロジェクトを作った直後に1回だけ実行します。<br />
-      共通パスワード（全員のログイン用）・設定パスワード（設定画面用）・ケア項目マスタ・定休日の初期値をFirestoreに書き込みます。<br />
-      パスドの変更後はこのページを再実行しても<b>パスワードだけは上書きされません</b>（Firebaseコンソールから変更してください）。
+      <b>先に Firebase コンソールでスタッフ共有アカウント（メール/パスワード）を作り、
+      <a href="login.html">login.html</a> でログインしてから</b>このページを開いてください。<br />
+      設定パスワード（設定画面用）・ケア項目マスタ・定休日の初期値をFirestoreに書き込みます。<br />
+      再実行しても<b>設定パスワードは上書きされません</b>（変更は Firebase コンソールから）。
     </div>
 
     <form id="setup-form" class="stack">
-      <label class="field">
-        <span>共通パスワード（スタッフ用）</span>
-        <input type="text" id="common-pw" required />
-      </label>
       <label class="field">
         <span>設定パスワード（設定画面を開くとき用）</span>
         <input type="text" id="manager-pw" required />

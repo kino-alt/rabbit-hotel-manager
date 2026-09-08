@@ -524,6 +524,21 @@ table.overview td.cell-empty { color: var(--muted); }
 .date-nav button { padding: 0 8px; font-size: 18px; line-height: 1.4; color: var(--sub); }
 .date-nav .label { font-size: 12px; color: var(--sub); min-width: 128px; text-align: center; }
 
+/* 画面共通トースト（主に書き込み失敗の通知。toast.js から使う） */
+.toast-host {
+  position: fixed; left: 50%; bottom: 20px; z-index: 100;
+  transform: translateX(-50%) translateY(16px);
+  max-width: calc(100% - 24px);
+  padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; font-weight: bold; line-height: 1.5; text-align: center;
+  background: var(--text); color: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .28);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.toast-host.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-host.error { background: var(--danger); }
+
 ul.plain { list-style: none; padding: 0; margin: 0; }
 ul.plain li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 ul.plain li:last-child { border-bottom: 0; }

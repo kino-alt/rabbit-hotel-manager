@@ -1,0 +1,13 @@
+{
+  "name": "rabbit-hotel-manager",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "うさぎホテル業務管理アプリ（Firebase Hosting + Firestore）",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

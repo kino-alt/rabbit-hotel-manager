@@ -9,6 +9,7 @@ import {
   careOnDate, runOnDate, isStayEnded,
 } from "./schedule.js";
 import { rabbitScheduleTableHTML } from "./overviewView.js";
+import { notifyWriteError } from "./toast.js";
 
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
@@ -343,7 +344,7 @@ function renderCareOnlyCard(r, sentView, ci) {
     const head = cardHead(r, "ケア 送信済み", { sent: true });
     card.appendChild(head);
     if (note) card.appendChild(note);
-    card.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(console.error))));
+    card.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError))));
     return card;
   }
 
@@ -353,7 +354,7 @@ function renderCareOnlyCard(r, sentView, ci) {
   if (ci.careDone) {
     // 実施済みになったらケア項目を出す＋パネルごとスワイプ
     const detail = detailLine("実施：" + (ci.doneNames.join(" / ") || "―"));
-    swipeWholeCard(card, head, [note, detail], () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(console.error));
+    swipeWholeCard(card, head, [note, detail], () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError));
   } else {
     // 未完了：ヘッダーのみ（「ケア担当が未完了です」は出さない）
     card.appendChild(head);
@@ -430,7 +431,7 @@ function renderCard(r, sentView) {
       const info = mutedLine("実施：" + (ci.doneNames.join(" / ") || "―"));
       info.classList.add("info-pad");
       careSec.appendChild(info);
-      careSec.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(console.error))));
+      careSec.appendChild(rowEnd(undoButton(() => dr.unmarkCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError))));
       body.appendChild(careSec);
     }
   } else {
@@ -482,7 +483,7 @@ function renderCard(r, sentView) {
         info.classList.add("info-pad");
         careSec.appendChild(info);
         careSec.appendChild(swipeNote("スワイプで完了"));
-        body.appendChild(wrapSwipe(careSec, () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(console.error)));
+        body.appendChild(wrapSwipe(careSec, () => dr.markCareLineSent(STORE_ID, r, currentDate).catch(notifyWriteError)));
       } else {
         careSec.appendChild(mutedLine("ケア担当が未完了です"));
         body.appendChild(careSec);
@@ -516,13 +517,13 @@ function mutedLine(text) {
 }
 
 function onRunCheckToggle(r, index, done) {
-  dr.updateRunCheck(STORE_ID, r, currentDate, index, done).catch(console.error);
+  dr.updateRunCheck(STORE_ID, r, currentDate, index, done).catch(notifyWriteError);
 }
 function onRunSend(r, index) {
-  dr.markRunLineSent(STORE_ID, r, currentDate, index).catch(console.error);
+  dr.markRunLineSent(STORE_ID, r, currentDate, index).catch(notifyWriteError);
 }
 function onRunUndo(r, index) {
-  dr.unmarkRunLineSent(STORE_ID, r, currentDate, index).catch(console.error);
+  dr.unmarkRunLineSent(STORE_ID, r, currentDate, index).catch(notifyWriteError);
 }
 
 // 送信取り消しボタン（全カード共通。ラベル・体裁をそろえ、CSS で頭に ↩ が付く）
@@ -608,7 +609,7 @@ function enableSwipeComplete(card, fg, onComplete) {
   card.addEventListener("pointercancel", end);
 }
 function onPhotoCheck(r, field, value) {
-  dr.updatePhotoStatus(STORE_ID, r, currentDate, field, value).catch(console.error);
+  dr.updatePhotoStatus(STORE_ID, r, currentDate, field, value).catch(notifyWriteError);
 }
 
 function esc(s) {
