@@ -145,7 +145,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     ownerLastName, rabbitName, groupId,
     checkInDate, checkOutDate,          ("YYYY-MM-DD")
     transportDropoff, transportPickup, isFirstTime, note,
-    staffName,                         (担当スタッフ名。登録時のみ入力・必須。未入力なら null)
+    staffName,                         (担当スタッフ名。登録STEP2の最後で入力・必須。全体一覧/過去の記録のうさぎ名の下に「担当 ○○」で表示)
     createdAt, hiddenAt, expireAt,
     careSchedule:  { "YYYY-MM-DD": [itemId, ...] }
     careCounts:    { "YYYY-MM-DD": { itemId: 回数 } }   (careItemsMaster.countable の項目のみ。通常項目は持たない)
