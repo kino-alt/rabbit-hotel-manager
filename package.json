@@ -5,9 +5,18 @@
   "type": "module",
   "description": "うさぎホテル業務管理アプリ（Firebase Hosting + Firestore）",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint public tests",
+    "format": "prettier --write \"public/**/*.{js,css}\" \"tests/**/*.js\" \"*.{js,json}\"",
+    "format:check": "prettier --check \"public/**/*.{js,css}\" \"tests/**/*.js\" \"*.{js,json}\"",
+    "check": "npm run lint && npm run format:check && npm test"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6"
   }
 }

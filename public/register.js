@@ -14,6 +14,7 @@ import {
 import {
   buildEntry, entryToSchedules, careScheduleShape, careUnitsOnDay,
 } from "./scheduleGrid.js";
+import { esc } from "./esc.js";
 
 const F = (id) => document.getElementById(id);
 const form = F("rabbit-form");
@@ -41,9 +42,6 @@ let entries = [];
 // ---- helpers ----
 function showError(el, t) { el.className = "msg error"; el.textContent = t; }
 function showInfo(el, t) { el.className = "msg info"; el.textContent = t; }
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-}
 function newGroupId() {
   return "g_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
 }
