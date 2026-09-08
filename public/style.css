@@ -35,6 +35,43 @@
   background: var(--holiday);
 }
 
+/* アイコン。SVG を data URI で背景画像として埋め込む（外部ファイルなし・mask不使用＝確実に表示）。
+   色は SVG に直接指定（緑=ナビ/操作、グレー=補助）。編集用に同じ SVG を public/icons/ にも置く。 */
+.ico {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.15em;
+  flex: 0 0 auto;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.ico-chevron-left {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M15%205l-7%207%207%207'/%3E%3C/svg%3E");
+}
+.ico-chevron-right {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M9%205l7%207-7%207'/%3E%3C/svg%3E");
+}
+.ico-menu {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%207h16M4%2012h16M4%2017h16'/%3E%3C/svg%3E");
+}
+.ico-close {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230F6E56'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M6%206l12%2012M18%206L6%2018'/%3E%3C/svg%3E");
+}
+.ico-plus {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23ffffff'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%205v14M5%2012h14'/%3E%3C/svg%3E");
+}
+.ico-caret {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%235F5E5A'%20stroke-width='2.4'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M6%209l6%206%206-6'/%3E%3C/svg%3E");
+}
+.ico-help {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%235F5E5A'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d=%27M9.1%209.2a3%203%200%201%201%204.7%202.9c-1%20.6-1.8%201.3-1.8%202.6%27/%3E%3Ccircle%20cx=%2712%27%20cy=%2718%27%20r=%271.2%27%20fill=%27%235F5E5A%27%20stroke=%27none%27/%3E%3C/svg%3E");
+}
+.ico-grip {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='%235F5E5A'%3E%3Ccircle%20cx='9'%20cy='6'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='6'%20r='1.6'/%3E%3Ccircle%20cx='9'%20cy='12'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='12'%20r='1.6'/%3E%3Ccircle%20cx='9'%20cy='18'%20r='1.6'/%3E%3Ccircle%20cx='15'%20cy='18'%20r='1.6'/%3E%3C/svg%3E");
+}
+
 * {
   box-sizing: border-box;
 }
@@ -297,13 +334,24 @@ label.inline {
 }
 .rabbit .head {
   display: flex;
+  align-items: stretch;
+}
+/* 展開トグル（名前・状況・キャレット）。expandable なカードでは <button>。 */
+.rabbit .head-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  width: 100%;
   background: transparent;
   border: 0;
   text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.rabbit button.head-main {
+  cursor: pointer;
 }
 .rabbit .head .name {
   font-weight: bold;
@@ -343,7 +391,7 @@ label.inline {
   display: inline-flex;
   transition: transform 0.15s ease;
 }
-.rabbit .head .tri svg {
+.rabbit .head .tri .ico {
   width: 13px;
   height: 13px;
 }
@@ -352,16 +400,23 @@ label.inline {
 }
 .rabbit .head .help {
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  align-self: center;
+  margin-right: 10px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: #fff;
   color: var(--sub);
-  font-size: 12px;
-  line-height: 18px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+}
+.rabbit .head .help .ico {
+  width: 14px;
+  height: 14px;
 }
 
 /* 左スワイプで完了操作（ケア完了 / LINE送信済み など） */
@@ -777,9 +832,14 @@ label.inline {
 
 /* 左サイドのメニュードロワー（main.html） */
 #menu-btn {
-  font-size: 18px;
   line-height: 1;
-  padding: 6px 8px;
+  padding: 5px 7px;
+  display: inline-flex;
+  align-items: center;
+}
+#menu-btn .ico {
+  width: 20px;
+  height: 20px;
 }
 .drawer {
   position: fixed;
@@ -842,9 +902,11 @@ label.inline {
   background: var(--accent);
   color: #fff;
   text-decoration: none;
-  font-size: 20px;
   line-height: 1;
-  font-weight: bold;
+}
+.add-btn .ico {
+  width: 20px;
+  height: 20px;
 }
 
 table.overview {
@@ -898,6 +960,28 @@ table.overview td.rabbit-name {
   white-space: normal;
   line-height: 1.15;
   font-size: 11px;
+}
+/* 担当スタッフ名：うさぎ名セル（rowspan=3）の右下に極小バッジで貼る。
+   モバイルは font-size に下限があり小さくできないため、実サイズは 10px にして
+   transform: scale で見た目を縮める（このアプリの他の極小表示と同じ手法）。 */
+.overview.compact td.rabbit-name {
+  padding-bottom: 15px;
+}
+.overview .ov-staff {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: normal;
+  white-space: nowrap;
+  transform: scale(0.82);
+  transform-origin: right bottom;
+  color: var(--sub);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 3px;
 }
 .overview.compact th.kind,
 .overview.compact td.kind {
@@ -1001,6 +1085,18 @@ table.overview td.cell-empty {
   font-size: 11px;
   color: var(--muted);
   margin: 0 0 6px;
+}
+
+/* 登録STEP2の最後：担当スタッフ名（予定表そのものではない補足入力なので、
+   カード地色の控えめな箱にして「メモ」であることを分かるようにする） */
+.staff-confirm {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 6px;
+}
+.staff-confirm .field > span {
+  font-weight: 600;
 }
 .sched-hint b {
   color: var(--accent-dark);
@@ -1192,10 +1288,15 @@ table.overview td.cell-empty {
   margin: 2px 0 10px;
 }
 .date-nav button {
-  padding: 0 8px;
-  font-size: 18px;
-  line-height: 1.4;
+  padding: 2px 10px;
+  line-height: 1;
   color: var(--sub);
+  display: inline-flex;
+  align-items: center;
+}
+.date-nav button .ico {
+  width: 20px;
+  height: 20px;
 }
 .date-nav .label {
   font-size: 12px;
@@ -1333,7 +1434,7 @@ ul.plain li.muted {
   user-select: none;
   -webkit-user-select: none;
 }
-.ci-handle svg {
+.ci-handle .ico {
   width: 15px;
   height: 15px;
 }

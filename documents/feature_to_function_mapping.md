@@ -1,6 +1,11 @@
-# 機能別:関数の役割と処理の流れ(改訂3)
+# 機能別:関数の役割と処理の流れ(改訂4)
 
 このドキュメントは、「この機能はどう実現されているか」を、実際に動く関数の順番で追えるようにまとめたものです。
+
+> **改訂4（2026-09）の要点**（本文の該当箇所も反映済み）：
+> ログインは匿名認証 → メール/パスワードの共有アカウント（`signInWithEmailAndPassword`）。
+> `db.bumpTotals()` と `careTotals` / `runTotal` は廃止。
+> 登録時に `staffName`（担当スタッフ名）を入力。最新は `README.md`。
 
 **改訂内容**
 
@@ -10,7 +15,6 @@
   - ケア/ラン/一覧画面の購読を`subscribeActiveRabbits()`(一覧購読)に変更
   - LINE送信・項目の追加/削除の操作は「スワイプ」ではなく**ボタン／セレクト**で実装
   - `getOrCreateDailyRecord()`は care.js / run.js のみが呼ぶ(overview.js は参照のみ)
-  - ケア/ランの累計は`db.bumpTotals()`で加減算
   - 各画面は先頭で`auth.js`の`requireAuth()`を通す
 
 > **注意（2025 データ層改修後）**：このドキュメントの一部の関数名・流れは設計時の呼称のままです。
@@ -30,7 +34,7 @@
 | 順番 | ファイル.関数 | 役割 |
 |---|---|---|
 | 1 | `login.js` の `onLoginSubmit(inputPassword)` | パスワード入力フォームの送信を受け取る |
-| 2 | `auth.js` の `login(inputPassword)` | 先に`signInAnonymously()`で匿名ログイン → `db.getConfig()`で`config/common`を取得 → `managerPassword`→`commonPassword`の順に照合し role を決定 |
+| 2 | `auth.js` の `login(inputPassword)` | `signInWithEmailAndPassword(STAFF_EMAIL, inputPassword)`。成功なら `{ ok: true }`、`auth/*` エラーなら `{ ok: false }` |
 | 3 | (一致) `localStorage`に role を保存し `main.html` へ / (不一致) `signOut`して「パスワードが違います」 |
 
 → 以後、各画面の`requireAuth()`が「ログイン済みか」を見て、未ログインなら`login.html`へ戻す。Firestoreのセキュリティルールも同じく認証状態でアクセス可否を判定する。
@@ -42,7 +46,6 @@
 | 1 | `care.js` の `onCheckboxClick(rabbit, itemId, done)` | チェックボックスのクリックを受け取る |
 | 2 | `dailyRecord.js` の `updateCareItem(storeId, rabbit, date, itemId, done)` | 該当項目の実施状況を書き換え、全項目完了かを自動判定 |
 | 3 | `db.js` の `writeDailyRecord(storeId, rabbitId, date, data)` | うさぎ文書内の`dailyRecords.{date}.care`部分だけを部分更新 |
-| 4 | `db.js` の `bumpTotals(storeId, rabbitId, { careItemId, careDelta })` | 実施済みの増減を`careTotals`に反映 |
 
 ## 2. ケア担当:その日だけ項目を追加・削除する
 
@@ -68,7 +71,7 @@
 |---|---|---|
 | 1 | `run.js` の `onRunCheckToggle(rabbit, index, done)` | 何回目のチェックが押されたかを受け取る |
 | 2 | `dailyRecord.js` の `updateRunCheck(storeId, rabbit, date, index, done)` | 実施済み回数(`doneCount`)を更新 |
-| 3 | `db.js` の `writeDailyRecord(...)` + `bumpTotals(..., { runDelta })` | Firestoreに書き込み、`runTotal`に差分を反映 |
+| 3 | `db.js` の `writeDailyRecord(...)` | Firestoreに書き込み（購読中の他画面へ自動反映） |
 
 ## 5. ラン担当:1回ごとにLINE送信済みにする
 
@@ -94,7 +97,7 @@
 
 | 順番 | ファイル.関数 | 役割 |
 |---|---|---|
-| 1 | `dailyRecord.js` の `getOrCreateDailyRecord(storeId, rabbit, date, holidays)`(記録作成時) | `photoSchedule`の指定があればそれを、無ければ `schedule.js` の `calculatePhotoNeeded(...)` を呼び、写真が必要な日かを自動判定して初期値をセット |
+| 1 | `dailyRecord.js` の `getOrCreateDailyRecord(storeId, rabbit, date, holidays)`(記録作成時) | `schedule.js` の `calculatePhotoNeeded(...)` を呼び、写真が必要な日かを自動判定して初期値をセット |
 | 2 | `care.js` または `run.js` の `onPhotoCheck(rabbit, field, value)` | 「写真が必要」「撮影済み」「送信済み」チェックを受け取る |
 | 3 | `dailyRecord.js` の `updatePhotoStatus(storeId, rabbit, date, field, value)` | 該当フラグ(`needed`/`taken`/`sent`)を更新(自動判定後も手動で上書き可能) |
 | 4 | `db.js` の `writeDailyRecord(...)` | Firestoreに書き込む |
@@ -185,4 +188,4 @@
 | 店長設定 | admin.js → db.js(直結) |
 | 過去記録参照 | history.js → db.js(getAllRabbits) → hiddenAt ありだけを overviewView.scheduleGridHTML で月ごとに表示（閲覧専用）|
 | 自動削除 | db.js(hideRabbit の書き込みのみ)+ Firestore TTL(削除は自動) |
-| 初期セットアップ | setup.js → auth.js(匿名ログイン) → db.js(initConfig / initStore) |
+| 初期セットアップ | (先に login.html でログイン) → setup.js → auth.js(requireLogin) → db.js(initConfig / initStore) |

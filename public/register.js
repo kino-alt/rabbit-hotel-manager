@@ -8,16 +8,9 @@ import { requireAuth } from "./auth.js";
 import * as db from "./db.js";
 import * as dr from "./dailyRecord.js";
 import { STORE_ID } from "./firebase-config.js";
-import {
-  eachDate,
-  dayWd,
-  isHoliday,
-  calculatePhotoNeeded,
-  todayISO,
-  countableIdSet,
-} from "./schedule.js";
-import { buildEntry, entryToSchedules, careScheduleShape, careUnitsOnDay } from "./scheduleGrid.js";
-import { esc } from "./esc.js";
+import { eachDate, isHoliday, todayISO, countableIdSet } from "./schedule.js";
+import { buildEntry, entryToSchedules, careUnitsOnDay } from "./scheduleGrid.js";
+import { scheduleTableHTML, careBreakdownHTML } from "./registerGridView.js";
 
 const F = (id) => document.getElementById(id);
 const form = F("rabbit-form");
@@ -339,78 +332,11 @@ function setRun(ei, day, n) {
   else e.runByDay[day] = n;
   touchGrid();
 }
-function runOptions(sel) {
-  let o = "";
-  for (let i = 0; i <= 9; i++)
-    o += `<option value="${i}"${i === sel ? " selected" : ""}>${i === 0 ? "−" : i}</option>`;
-  return o;
-}
 
-// ---- STEP2 メイン：予定表（ケア/ラン/写真 × 滞在日） ----
+// ---- STEP2 メイン：予定表（HTML生成は registerGridView.js。ここは配線だけ） ----
 function renderStep2() {
   const wrap = F("schedule-table");
-  const today = todayISO();
-  const cols = stayDates.map((d) => {
-    const { day, wd } = dayWd(d);
-    return { d, day, wd, hol: isHoliday(d, holidays), today: d === today };
-  });
-  const headRow =
-    "<tr><th class='kind'></th>" +
-    cols
-      .map(
-        (c) =>
-          `<th class="dcol${c.hol ? " col-holiday" : ""}${c.today ? " today" : ""}">${c.day}<span class="wd">${c.wd}</span></th>`,
-      )
-      .join("") +
-    "</tr>";
-
-  let html = "";
-  entries.forEach((e, ei) => {
-    const shape = careScheduleShape(e);
-
-    html += `<div class="sched-name">${esc(e.name)}</div>`;
-    html += `<div class="scroll-x"><table class="overview compact sched"><thead>${headRow}</thead><tbody>`;
-
-    // ケア行
-    html += `<tr><td class="kind">ケア</td>`;
-    html += cols
-      .map((c) => {
-        const inCare = e.careDays.includes(c.d);
-        const units = inCare ? careUnitsOnDay(e, c.d) : 0;
-        if (c.hol) return `<td class="dcol cell-off">${units || ""}</td>`;
-        if (!inCare)
-          return `<td class="dcol cell-care" data-addday data-e="${ei}" data-d="${c.d}">＋</td>`;
-        if (units === 0)
-          return `<td class="dcol cell-care cell-empty" data-rmday data-e="${ei}" data-d="${c.d}" title="タップで取り消し">–</td>`;
-        return `<td class="dcol cell-care on">✓${units > 1 ? units : ""}</td>`;
-      })
-      .join("");
-    html += "</tr>";
-
-    // ラン行
-    html += `<tr><td class="kind">ラン</td>`;
-    html += cols
-      .map((c) => {
-        const n = e.runByDay[c.d] || 0;
-        if (c.hol) return `<td class="dcol cell-off">${n || ""}</td>`;
-        return `<td class="dcol${n > 0 ? " cell-run on" : ""}"><select class="run-sel" data-e="${ei}" data-d="${c.d}">${runOptions(n)}</select></td>`;
-      })
-      .join("");
-    html += "</tr>";
-
-    // 写真行（自動判定・読み取り専用）
-    html += `<tr><td class="kind">写真</td>`;
-    html += cols
-      .map((c) => {
-        const need = calculatePhotoNeeded(c.d, shape, e.runByDay, holidays, busyPeriods);
-        return `<td class="dcol cell-photo">${need ? "〇" : ""}</td>`;
-      })
-      .join("");
-    html += "</tr>";
-
-    html += "</tbody></table></div>";
-  });
-  wrap.innerHTML = html;
+  wrap.innerHTML = scheduleTableHTML(entries, stayDates, { holidays, busyPeriods });
 
   wrap
     .querySelectorAll("[data-addday]")
@@ -429,65 +355,17 @@ function renderStep2() {
   renderCareBreakdown();
 }
 
-// ケア予定日が2日以上のときだけ、本体の表の“補足”として #care-breakdown に出す。
-//  通常項目 … 日付チップを1つ選ぶ
-//  回数式項目 … 日付ごとに1行の「− n +」。合計は固定で、片方を増やすと別の日が減る
+// ケア予定日が2日以上のときだけ出す「どの日にやるか」の補足（HTML生成は registerGridView.js）。
 function renderCareBreakdown() {
   const wrap = F("care-breakdown");
-  const blocks = [];
-
-  entries.forEach((e, ei) => {
-    const days = e.careDays.filter((d) => !isHoliday(d, holidays)).sort();
-    if (days.length < 2) return;
-
-    let h = "";
-    if (entries.length > 1) h += `<div class="bd-rabbit">${esc(e.name)}</div>`;
-
-    e.normalIds.forEach((id) => {
-      const chips = days
-        .map((d) => {
-          const { day, wd } = dayWd(d);
-          const on = e.itemDay[id] === d;
-          return (
-            `<label class="daychip${on ? " on" : ""}">` +
-            `<input type="radio" name="bd-${ei}-${esc(id)}" data-move data-e="${ei}" data-id="${esc(id)}" data-d="${d}"${on ? " checked" : ""}>` +
-            `${day}(${wd})</label>`
-          );
-        })
-        .join("");
-      h += `<div class="bd-item"><div class="bd-name">${esc(careItemName(id))}</div><div class="bd-days">${chips}</div></div>`;
-    });
-
-    e.brushIds.forEach((id) => {
-      const totalN = days.reduce((n, d) => n + ((e.brushByDay[d] || {})[id] || 0), 0);
-      const pairs = days
-        .map((d) => {
-          const { day, wd } = dayWd(d);
-          const n = (e.brushByDay[d] || {})[id] || 0;
-          return (
-            `<span class="bd-cpair"><span class="bd-cd">${day}(${wd})</span>` +
-            `<span class="runctl sm">` +
-            `<button type="button" data-bdec data-e="${ei}" data-d="${d}" data-id="${esc(id)}">−</button>` +
-            `<b>${n}</b>` +
-            `<button type="button" data-binc data-e="${ei}" data-d="${d}" data-id="${esc(id)}">＋</button>` +
-            `</span></span>`
-          );
-        })
-        .join("");
-      h += `<div class="bd-item"><div class="bd-name">${esc(careItemName(id))}<span class="muted"> 全${totalN}回</span></div><div class="bd-cline">${pairs}</div></div>`;
-    });
-
-    blocks.push(h);
-  });
-
-  if (blocks.length === 0) {
+  const html = careBreakdownHTML(entries, { holidays, careItemName });
+  if (!html) {
     wrap.hidden = true;
     wrap.innerHTML = "";
     return;
   }
   wrap.hidden = false;
-  wrap.innerHTML =
-    '<div class="bd-head">補足：ケアが複数日にあるとき、どの日にやるか</div>' + blocks.join("");
+  wrap.innerHTML = html;
 
   wrap.querySelectorAll("input[data-move]").forEach((r) =>
     r.addEventListener("change", () => {
@@ -556,6 +434,13 @@ async function onSave() {
     }
 
     if (!groupId) groupId = newGroupId();
+    const staffName = F("staffName").value.trim();
+    if (!staffName) {
+      showError(schedMsg, "登録した担当スタッフを入力してください");
+      F("staffName").focus();
+      return;
+    }
+    localStorage.setItem("lastStaffName", staffName);
     for (const e of entries) {
       await db.saveRabbit(STORE_ID, {
         ...shared,
@@ -563,6 +448,7 @@ async function onSave() {
         isFirstTime: e.card.isFirstTime,
         note: e.card.note,
         groupId,
+        staffName: staffName || null,
         ...entryToSchedules(e),
       });
     }
@@ -631,9 +517,11 @@ F("remote-reload").addEventListener("click", () => {
   gridDirty = false;
 });
 
-// 新規登録は1羽めのカードを最初から表示し、お預かり日を今日にしておく
+// 新規登録は1羽めのカードを最初から表示し、お預かり日を今日にしておく。
+// 「登録した人」は前回入力した名前をあらかじめ入れておく（毎回打たなくてよいように）。
 if (!editId) {
   F("checkInDate").value = todayISO();
+  F("staffName").value = localStorage.getItem("lastStaffName") || "";
   addCard();
 }
 
@@ -647,6 +535,8 @@ requireAuth(async () => {
     F("next-btn").textContent = "次へ（予定の編集）";
     F("save-btn").textContent = "保存";
     F("add-rabbit-card").hidden = true;
+    // 「登録した人」は登録時のみ入力。編集画面では入力欄を隠し、記録済みの名前を表示する。
+    F("staff-name-field").hidden = true;
 
     // 1回きりの getDoc ではなく購読。編集中に他端末で変わっても
     // loadedRabbit は最新に保たれ、保存は writeSchedulesMerge で差分マージされる。
@@ -669,6 +559,13 @@ requireAuth(async () => {
       F("checkOutDate").value = rabbit.checkOutDate || "";
       F("transportDropoff").checked = !!rabbit.transportDropoff;
       F("transportPickup").checked = !!rabbit.transportPickup;
+
+      const staff = rabbit.staffName || rabbit.registeredBy; // 旧フィールド名も一応拾う
+      if (staff) {
+        const note = F("staff-name-note");
+        note.textContent = `担当スタッフ：${staff}`;
+        note.hidden = false;
+      }
 
       const used = new Set();
       Object.values(rabbit.careSchedule || {}).forEach((arr) =>

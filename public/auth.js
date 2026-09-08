@@ -12,7 +12,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+} from "./vendor.js";
 
 import { auth, STAFF_EMAIL } from "./firebase-config.js";
 import { getConfig } from "./db.js";

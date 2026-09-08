@@ -18,7 +18,7 @@ import {
   runTransaction,
   arrayUnion,
   arrayRemove,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "./vendor.js";
 
 import { firestore, STORE_ID } from "./firebase-config.js";
 import { computeSchedulePatch, DELETE } from "./scheduleMerge.js";
@@ -55,7 +55,6 @@ export async function saveRabbit(storeId, data) {
     careSchedule: {},
     careCounts: {},
     runSchedule: {},
-    photoSchedule: {},
     dailyRecords: {},
     hiddenAt: null,
     expireAt: null,
@@ -269,7 +268,6 @@ export async function createPlaceholderRabbit(storeId) {
     note: "TTLポリシー設定のための仮データ。ポリシー有効化後は削除して問題ありません。",
     careSchedule: {},
     runSchedule: {},
-    photoSchedule: {},
     dailyRecords: {},
     createdAt: serverTimestamp(),
     hiddenAt: serverTimestamp(),

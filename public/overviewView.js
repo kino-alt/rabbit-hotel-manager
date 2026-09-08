@@ -60,18 +60,13 @@ function getCellStatus(rabbit, date, type, holidays, busyPeriods, countableIds) 
     return rec.photo.needed ? "〇" : "";
   }
   if (isBusyPeriod(date, busyPeriods)) return "";
-  const ps = rabbit.photoSchedule && rabbit.photoSchedule[date];
-  let needed;
-  if (ps === "needed") needed = true;
-  else if (ps === "not_needed") needed = false;
-  else
-    needed = calculatePhotoNeeded(
-      date,
-      rabbit.careSchedule,
-      rabbit.runSchedule,
-      holidays,
-      busyPeriods,
-    );
+  const needed = calculatePhotoNeeded(
+    date,
+    rabbit.careSchedule,
+    rabbit.runSchedule,
+    holidays,
+    busyPeriods,
+  );
   return needed ? "〇" : "";
 }
 
@@ -124,6 +119,7 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
 
   sorted.forEach((r, i) => {
     const name = esc(`${r.ownerLastName || ""} ${r.rabbitName || ""}`);
+    const staff = r.staffName ? `<span class="ov-staff">${esc(r.staffName)}</span>` : "";
     // 次のうさぎが別の飼い主なら、このうさぎの下を2重線で区切る
     const nextSame =
       sorted[i + 1] && (sorted[i + 1].ownerLastName || "") === (r.ownerLastName || "");
@@ -133,7 +129,7 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
       html += ri === 2 && grpEnd ? '<tr class="grp-end">' : "<tr>";
       if (ri === 0) {
         const inner = opts.nameLink ? `<a href="#" data-rabbit="${esc(r.id)}">${name}</a>` : name;
-        html += `<td class='rabbit-name${grpEnd ? " grp-end" : ""}' rowspan='3'>${inner}</td>`;
+        html += `<td class='rabbit-name${grpEnd ? " grp-end" : ""}' rowspan='3'>${inner}${staff}</td>`;
       }
       html += `<td class="kind">${{ care: "ケア", run: "ラン", photo: "写真" }[type]}</td>`;
       for (const m of meta) {
