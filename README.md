@@ -141,8 +141,6 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     careCounts:    { "YYYY-MM-DD": { itemId: 回数 } }   (careItemsMaster.countable の項目のみ。通常項目は持たない)
     runSchedule:   { "YYYY-MM-DD": 回数 }
     photoSchedule: { "YYYY-MM-DD": "needed" | "not_needed" }   (無い日は自動判定。繁忙期は常に不要)
-    careTotals:    { itemId: 累計回数 }
-    runTotal:      累計回数
     dailyRecords:  { "YYYY-MM-DD": {
         care:  { items: { itemId: bool },              (通常項目)
                  counts: { itemId: { need, done } },   (回数式項目)
@@ -167,6 +165,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 | `getOrCreateDailyRecord` の引数 | `(rabbitId, date)` | `(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | 購読中の文書と店舗設定を渡して読み取り回数を減らすため |
 | `overview` での記録生成 | 資料では一覧でも `getOrCreateDailyRecord` | 一覧では**生成せず参照のみ** | 未来日の記録を先に作らないため。生成はケア/ラン画面で当日ぶんのみ |
 | セットアップ | (コンソール前提) | `setup.html` を追加 | コンソールを触らずに初期値を投入できるように |
+| `careTotals` / `runTotal` | 宿泊全体の累計を文書に持つ | **廃止**（2026-09） | どの画面も読んでおらず、チェック操作ごとに余計な書き込みが増える＋当日記録と非アトミックにズレる原因になっていた。累計が要るときは `dailyRecords` から集計する |
 
 ## データ層と同時アクセス対策
 
