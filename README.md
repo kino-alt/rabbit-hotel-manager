@@ -224,8 +224,12 @@ npm run check     # lint + format:check + test（CI と同じ）
 - 各HTMLの `<head>` に `preconnect`（gstatic / firestore / securetoken）と `modulepreload`（vendor.js）
 - **App Check（reCAPTCHA Enterprise）はアイドル時に遅延初期化**（`firebase-config.js`）。
   reCAPTCHA スクリプトの読み込みが重く、毎ページの描画を待たせていたのを外した。
-- 開発が落ち着いたら、`firebase.json` の JS/CSS を `no-cache` → `max-age=600` にすると
-  作業中の画面移動でファイルを取り直さなくなる（デプロイ反映は最大10分遅れる）。
+- `firebase.json`：HTML は `no-cache`（毎回最新）、**JS/CSS/SVG は `max-age=3600`（1時間キャッシュ）**。
+  作業中の画面移動でファイルを取り直さない。
+  - デプロイした変更が端末に届くまで最大1時間（運用開始後はほぼデプロイしない前提）。
+  - **開発中にデプロイした変更をすぐ確認したいときはハード再読み込み**
+    （スマホ：サイトのデータを削除／PC：Ctrl+Shift+R）。`firebase serve` やプレビューチャンネルは常に最新。
+  - HTML と JS を同時に変えたデプロイの直後だけ、旧JS＋新HTMLで一時的にズレる可能性 → 再読み込みで解消。
 
 完全に無くすには SPA 化（1ページ＋クライアントルーティング）が必要だが、規模的に見合わない。
 
