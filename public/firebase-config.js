@@ -6,7 +6,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  initializeAppCheck, ReCaptchaV3Provider,
+  initializeAppCheck, ReCaptchaEnterpriseProvider,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
@@ -28,9 +28,9 @@ const firebaseConfig = {
 // 1つだけ作成したアカウントのメールアドレスをここに書く。
 // スタッフは login 画面ではパスワードだけを入力し、内部でこのアドレス固定でログインする。
 // ★ 実際に作成したアドレスに置き換えてください（詳細は README「セキュリティ」節）。
-export const STAFF_EMAIL = "staff@rabbit-hotel-manager.example";
+export const STAFF_EMAIL = "kh2005haru@icloud.com";
 
-// App Check（reCAPTCHA v3）のサイトキー。
+// App Check（reCAPTCHA Enterprise・スコアベースのサイトキー）。
 // 空文字なら App Check は初期化しない（未設定でも動く）。
 // 設定手順は README「セキュリティ」節を参照。
 const RECAPTCHA_SITE_KEY = "";
@@ -72,7 +72,7 @@ export const app = initializeApp(firebaseConfig);
 if (RECAPTCHA_SITE_KEY) {
   try {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+      provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
       isTokenAutoRefreshEnabled: true,
     });
   } catch (e) {

@@ -79,15 +79,20 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
   → デプロイURLを知っているだけでは読み書きできない（以前の匿名認証では誰でも通っていた）。
 - **設定パスワード**：`config/common.managerPassword`。ログイン済みスタッフのみ読める。
   設定画面(`admin.html`)を開くときの2段階目の確認に使う（クライアント側で照合）。
-- **App Check（推奨・任意）**：正規のWebアプリからのアクセスかをreCAPTCHA v3で検証し、
-  盗まれた設定値やスクリプトからの直接アクセスを弾く。設定手順：
-  1. Firebase コンソール → **App Check** → アプリを登録 → **reCAPTCHA v3** を選択。
-     表示された**サイトキー**を `public/firebase-config.js` の `RECAPTCHA_SITE_KEY` に貼る。
+- **App Check（推奨・任意）**：正規のWebアプリからのアクセスかを **reCAPTCHA Enterprise** で検証し、
+  盗まれた設定値やスクリプトからの直接アクセスを弾く。
+  （classic reCAPTCHA v3 は Google が Enterprise へ移行中のため、最初から Enterprise を使う。
+  Enterprise は月1万アセスメントまで無料。このプロジェクトは TTL 利用で Blaze なので追加の課金設定は不要）
+  設定手順：
+  1. Firebase コンソール → **App Check** → アプリを登録 → **reCAPTCHA Enterprise** を選択。
+     案内に沿って **スコアベース（website / score-based）のサイトキー**を作成し、
+     そのキーの許可ドメインに Hosting のドメイン（`*.web.app` / 独自ドメイン）を追加。
+     キーIDを `public/firebase-config.js` の `RECAPTCHA_SITE_KEY` に貼る。
   2. デプロイして `login.html` を開き、コンソールの App Check 画面で**リクエストが検証済みとして届く**ことを確認。
-     ローカル(`firebase serve`)で試す場合は、コンソールで表示されるデバッグトークンを登録する
-     （`self.FIREBASE_APPCHECK_DEBUG_TOKEN = true` を DevTools で一時設定 → 出力トークンを登録）。
+     ローカル(`firebase serve`)で試す場合は、DevTools で `self.FIREBASE_APPCHECK_DEBUG_TOKEN = true`
+     を実行 → コンソールに出るトークンを App Check → アプリ → **デバッグトークン**に登録。
   3. 検証済みリクエストが十分に届いていることを確認してから、
-     App Check → **Firestore** の「適用」を**有効化**する（有効化前は未検証でも通る）。
+     App Check → **Cloud Firestore** の「適用」を**有効化**する（有効化前は未検証でも通る）。
   - `RECAPTCHA_SITE_KEY` が空文字の間は App Check は初期化されない（未設定でもアプリは動く）。
 - **残るリスク**：スタッフ共有アカウントのパスワードを知る人は全データを読み書きできる。
   「誰がいつ変えたか」の監査ログはない。個人ごとの権限分離が必要になったら
