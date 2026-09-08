@@ -6,6 +6,7 @@ import { requireAuth, verifyManagerPassword, changeStaffPassword } from "./auth.
 import * as db from "./db.js";
 import { STORE_ID, currentStoreName } from "./firebase-config.js";
 import { todayISO } from "./schedule.js";
+import { grip } from "./icons.js";
 
 const WD = ["日", "月", "火", "水", "木", "金", "土"];
 const F = (id) => document.getElementById(id);
@@ -25,7 +26,7 @@ function renderItems() {
 
     const handle = document.createElement("span");
     handle.className = "ci-handle";
-    handle.textContent = "⠿";
+    handle.innerHTML = grip();
     handle.setAttribute("aria-label", "ドラッグして並べ替え");
     handle.title = "ドラッグして並べ替え";
     enableItemDrag(li, handle);

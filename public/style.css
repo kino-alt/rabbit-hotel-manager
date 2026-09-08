@@ -336,13 +336,19 @@ label.inline {
   margin: 0;
   accent-color: var(--accent);
 }
-/* 開閉三角（最小フォントサイズ設定に引っかからないよう scale で縮小） */
+/* 開閉キャレット（SVG。開いているとき .open で180度回転） */
 .rabbit .head .tri {
   flex: 0 0 auto;
   color: var(--sub);
-  display: inline-block;
-  transform: scale(0.55);
-  transform-origin: center;
+  display: inline-flex;
+  transition: transform 0.15s ease;
+}
+.rabbit .head .tri svg {
+  width: 13px;
+  height: 13px;
+}
+.rabbit .head .tri.open {
+  transform: rotate(180deg);
 }
 .rabbit .head .help {
   flex: 0 0 auto;
@@ -1317,15 +1323,19 @@ ul.plain li.muted {
 /* 並べ替えハンドル（掴んでいる間だけドラッグ。touch-action:none でスクロールに奪われない） */
 .ci-handle {
   flex: 0 0 auto;
+  display: inline-flex;
   padding: 6px 3px;
   margin-left: -3px;
   color: var(--muted);
-  font-size: 15px;
   line-height: 1;
   cursor: grab;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+.ci-handle svg {
+  width: 15px;
+  height: 15px;
 }
 .ci-handle:active {
   cursor: grabbing;
