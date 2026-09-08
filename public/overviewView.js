@@ -119,7 +119,7 @@ export function scheduleGridHTML(rabbits, dates, ctx, opts = {}) {
 
   sorted.forEach((r, i) => {
     const name = esc(`${r.ownerLastName || ""} ${r.rabbitName || ""}`);
-    const staff = r.staffName ? `<span class="ov-staff">担当 ${esc(r.staffName)}</span>` : "";
+    const staff = r.staffName ? `<span class="ov-staff">${esc(r.staffName)}</span>` : "";
     // 次のうさぎが別の飼い主なら、このうさぎの下を2重線で区切る
     const nextSame =
       sorted[i + 1] && (sorted[i + 1].ownerLastName || "") === (r.ownerLastName || "");
