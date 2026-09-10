@@ -147,12 +147,19 @@ button.small {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .spread {
   justify-content: space-between;
 }
 .grow {
   flex: 1;
+  min-width: 0;
+}
+/* 横並びの入力欄（お預かり日／お迎え日 など）：
+   狭い画面では縮められるようにし、入りきらなければ縦に折り返す */
+.row > .field.grow {
+  flex-basis: 160px;
 }
 .muted {
   color: var(--muted);
