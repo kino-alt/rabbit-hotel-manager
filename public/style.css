@@ -800,8 +800,8 @@ label.inline input[type="radio"] {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #f6dede;
-  color: var(--danger);
+  background: #ef9a9a;
+  color: #fff;
   font-size: 13px;
   line-height: 1;
   display: inline-flex;
