@@ -788,8 +788,10 @@ label.inline input[type="radio"] {
   padding: 6px 8px;
   border: 1px solid var(--line);
 }
-/* 項目の削除：閉じる×（緑・枠なし）と見分けるため、赤い小さめの丸に白い× */
-.care-edit .edit-row .x-btn {
+/* 項目の削除ボタン（ケア担当の編集・設定のケア項目で共通）。
+   閉じる×や他の操作と見分けるため薄い赤の小さな丸。目立ちすぎない濃さに */
+.care-edit .edit-row .x-btn,
+.ci-btn.del {
   flex: 0 0 auto;
   width: 21px;
   height: 21px;
@@ -798,8 +800,8 @@ label.inline input[type="radio"] {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--danger);
-  color: #fff;
+  background: #f6dede;
+  color: var(--danger);
   font-size: 13px;
   line-height: 1;
   display: inline-flex;
@@ -1571,7 +1573,4 @@ ul.plain li.muted {
   opacity: 0.25;
   cursor: default;
 }
-.ci-btn.del {
-  color: var(--danger);
-  font-size: 17px;
-}
+/* .ci-btn.del（削除の丸ボタン）の見た目は上部の共通ルールで定義 */
