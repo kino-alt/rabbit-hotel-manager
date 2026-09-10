@@ -105,6 +105,12 @@ header.bar h1 {
   font-size: 17px;
   margin: 0;
 }
+/* ヘッダーの「← 戻る」などのリンク：見た目はそのまま、指で押せる余白を確保 */
+header.bar a {
+  display: inline-block;
+  padding: 8px 4px;
+  margin: -8px 0;
+}
 
 a {
   color: var(--accent-dark);
@@ -118,6 +124,14 @@ button {
   border-radius: 8px;
   padding: 8px 12px;
   color: var(--text);
+}
+/* 文章つきの操作ボタンは、スマホで押しやすいよう最低44px確保。
+   アイコンだけの小さいボタン（.tri / .help / .ci-btn など）は対象外。 */
+button.primary,
+button.danger,
+button.ghost:not(.small) {
+  min-height: 44px;
+  padding: 11px 16px;
 }
 button.primary {
   background: var(--accent);
@@ -139,8 +153,9 @@ button:disabled {
   cursor: not-allowed;
 }
 button.small {
-  padding: 4px 8px;
-  font-size: 13px;
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 14px;
 }
 
 .row {
@@ -161,6 +176,12 @@ button.small {
    行ごと通常の縦積みに戻し、幅も他の入力欄とそろえる。 */
 .row:has(> .field.grow) {
   display: block;
+}
+.row:has(> .field.grow) > .field {
+  margin-bottom: 12px;
+}
+.row:has(> .field.grow) > .field:last-child {
+  margin-bottom: 0;
 }
 .muted {
   color: var(--muted);
@@ -187,8 +208,10 @@ input[type="number"],
 input[type="date"],
 select,
 textarea {
-  font: inherit;
-  padding: 8px 10px;
+  font-family: inherit;
+  /* 16px：スマホでタップしても拡大されない最小サイズ。高さも指で押しやすく */
+  font-size: 16px;
+  padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
@@ -200,15 +223,23 @@ textarea {
 }
 .field > span {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 label.inline {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  /* タップ範囲を広げる（見た目の位置は変えずに上下の余白だけ） */
+  padding: 6px 0;
+}
+label.inline input[type="checkbox"],
+label.inline input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
 }
 
 /* 必須マーク */
@@ -758,8 +789,8 @@ label.inline {
   flex: 1;
 }
 .item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   accent-color: var(--accent);
 }
 .item input[type="checkbox"]:disabled {
@@ -1394,6 +1425,10 @@ ul.plain li.muted {
 }
 .panel .add-row .field {
   margin-bottom: 0;
+}
+/* 追加行のボタンは隣の入力欄と高さをそろえる */
+.panel .add-row button.small {
+  min-height: 44px;
 }
 .panel .hr-soft {
   height: 1px;
