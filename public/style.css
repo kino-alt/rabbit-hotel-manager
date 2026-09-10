@@ -125,11 +125,12 @@ button {
   padding: 8px 12px;
   color: var(--text);
 }
-/* 文章つきの操作ボタンは、スマホで押しやすいよう最低44px確保。
-   アイコンだけの小さいボタン（.tri / .help / .ci-btn など）は対象外。 */
+/* フォームの主要ボタンは、スマホで押しやすいよう最低44px確保。
+   アイコンだけのボタン（日付送り .date-nav、.tri / .help / .ci-btn など）は
+   それぞれの指定を優先させるため、ここでは対象にしない。 */
 button.primary,
 button.danger,
-button.ghost:not(.small) {
+.stack > button.ghost {
   min-height: 44px;
   padding: 11px 16px;
 }
@@ -173,15 +174,13 @@ button.small {
 }
 /* 入力欄（.field）を横並びに置いていた行（お預かり日／お迎え日、
    繁忙期の開始日／終了日）。スマホの日付入力UIは縮まず隣とかぶるので、
-   行ごと通常の縦積みに戻し、幅も他の入力欄とそろえる。 */
-.row:has(> .field.grow) {
+   行ごと通常の縦積みに戻し、幅も他の入力欄とそろえる。
+   HTML 側で <div class="row stack-cols"> と付ける。 */
+.row.stack-cols {
   display: block;
 }
-.row:has(> .field.grow) > .field {
+.row.stack-cols > .field:not(:last-child) {
   margin-bottom: 12px;
-}
-.row:has(> .field.grow) > .field:last-child {
-  margin-bottom: 0;
 }
 .muted {
   color: var(--muted);
@@ -744,15 +743,34 @@ label.inline input[type="radio"] {
 .item.is-dim {
   opacity: 0.55;
 }
-/* ケア項目の編集ボックス */
+/* ケア項目の編集ボックス。行と操作を「編集を終える」ボタンとつり合う大きさに */
 .care-edit .sec-title {
-  font-size: 13px;
+  font-size: 15px;
 }
 .care-edit .edit-row {
-  margin-top: 6px;
+  margin-top: 0;
+  min-height: 44px;
+  gap: 8px;
+}
+.care-edit .edit-row + .edit-row {
+  border-top: 1px solid var(--line);
+}
+.care-edit .edit-row .grow {
+  font-size: 15px;
+}
+.care-edit .edit-row .mini-sel {
+  font-size: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+}
+.care-edit .edit-row .x-btn {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  font-size: 20px;
 }
 .care-edit .add-sel-full {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 /* スワイプ範囲のスキン（行単位／ラップ） */
 .swipe-fg.swipe-fg-row {
