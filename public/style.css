@@ -174,13 +174,16 @@ button.small {
 }
 /* 入力欄（.field）を横並びに置いていた行（お預かり日／お迎え日、
    繁忙期の開始日／終了日）。スマホの日付入力UIは縮まず隣とかぶるので、
-   行ごと通常の縦積みに戻し、幅も他の入力欄とそろえる。
-   HTML 側で <div class="row stack-cols"> と付ける。 */
+   行ごと縦積みにする。HTML 側で <div class="row stack-cols"> と付ける。 */
 .row.stack-cols {
   display: block;
 }
 .row.stack-cols > .field:not(:last-child) {
   margin-bottom: 12px;
+}
+/* 日付欄は全幅だと間延びするので、読みやすい幅で頭ぞろえにする */
+.row.stack-cols > .field input[type="date"] {
+  max-width: 15rem;
 }
 .muted {
   color: var(--muted);
@@ -743,14 +746,31 @@ label.inline input[type="radio"] {
 .item.is-dim {
   opacity: 0.55;
 }
-/* ケア項目の編集ボックス。行と操作を「編集を終える」ボタンとつり合う大きさに */
-.care-edit .sec-title {
+/* ケア項目の編集ボックス */
+.care-edit .care-edit-title {
+  display: block;
   font-size: 15px;
+  margin-bottom: 8px;
 }
 .care-edit .edit-row {
   margin-top: 0;
   min-height: 44px;
   gap: 8px;
+}
+/* 「編集を終える」＝編集モードを閉じるだけ（保存はその都度）なので、
+   目立つ緑ボタンではなく、下端で全幅の控えめなボタンにする */
+.care-edit-done {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  min-height: 40px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--sub);
+  font-weight: bold;
+}
+.care-edit-done:active {
+  background: var(--card);
 }
 .care-edit .edit-row + .edit-row {
   border-top: 1px solid var(--line);

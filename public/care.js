@@ -280,16 +280,8 @@ function renderCard(r) {
     box.className = "care-edit";
 
     const h = document.createElement("div");
-    h.className = "row spread";
-    h.innerHTML = `<b class="sec-title">ケア項目の編集</b>`;
-    const doneBtn = document.createElement("button");
-    doneBtn.className = "small primary";
-    doneBtn.textContent = "編集を終える";
-    doneBtn.addEventListener("click", () => {
-      editing.delete(r.id);
-      render();
-    });
-    h.appendChild(doneBtn);
+    h.className = "care-edit-title";
+    h.textContent = "ケア項目の編集";
     box.appendChild(h);
 
     const rows = [
@@ -343,6 +335,16 @@ function renderCard(r) {
       });
       box.appendChild(sel);
     }
+
+    const doneBtn = document.createElement("button");
+    doneBtn.type = "button";
+    doneBtn.className = "care-edit-done";
+    doneBtn.textContent = "編集を終える";
+    doneBtn.addEventListener("click", () => {
+      editing.delete(r.id);
+      render();
+    });
+    box.appendChild(doneBtn);
     body.appendChild(box);
   }
 
