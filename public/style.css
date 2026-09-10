@@ -788,11 +788,11 @@ label.inline input[type="radio"] {
   padding: 6px 8px;
   border: 1px solid var(--line);
 }
-/* 項目の削除：閉じる×（緑・枠なし）と見分けるため、赤い丸に白い× */
+/* 項目の削除：閉じる×（緑・枠なし）と見分けるため、赤い小さめの丸に白い× */
 .care-edit .edit-row .x-btn {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 21px;
+  height: 21px;
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -800,7 +800,7 @@ label.inline input[type="radio"] {
   border-radius: 50%;
   background: var(--danger);
   color: #fff;
-  font-size: 17px;
+  font-size: 13px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
