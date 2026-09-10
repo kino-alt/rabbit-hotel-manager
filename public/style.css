@@ -788,22 +788,29 @@ label.inline input[type="radio"] {
   padding: 6px 8px;
   border: 1px solid var(--line);
 }
+/* 項目の削除：閉じる×（緑・枠なし）と見分けるため、赤い丸に白い× */
 .care-edit .edit-row .x-btn {
-  min-width: 40px;
-  min-height: 40px;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  min-width: 0;
+  min-height: 0;
   padding: 0;
-  font-size: 20px;
-}
-/* 項目の追加：ランの回数と同じ「緑の丸＋」（.add-sel）＋ラベル */
-.care-edit-add {
-  display: flex;
+  border: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 17px;
+  line-height: 1;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  justify-content: center;
 }
-.care-edit-add-label {
-  font-size: 13px;
-  color: var(--sub);
+/* 項目の追加：設定画面と同じ全幅プルダウン。ただし高さは控えめに */
+.care-edit .add-care-sel {
+  margin-top: 10px;
+  font-size: 14px;
+  padding: 7px 10px;
 }
 /* スワイプ範囲のスキン（行単位／ラップ） */
 .swipe-fg.swipe-fg-row {

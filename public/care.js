@@ -336,10 +336,9 @@ function renderCard(r) {
     const remaining = careMaster.filter((m) => !allIds.includes(m.id));
     if (remaining.length > 0) {
       const sel = document.createElement("select");
-      sel.className = "add-sel";
-      sel.setAttribute("aria-label", "項目を追加");
+      sel.className = "add-care-sel";
       sel.innerHTML =
-        `<option value="">＋</option>` +
+        `<option value="">＋ 項目を追加…</option>` +
         remaining.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
       sel.addEventListener("change", () => {
         if (sel.value)
@@ -347,14 +346,7 @@ function renderCard(r) {
             alertErr,
           );
       });
-      const addRow = document.createElement("div");
-      addRow.className = "care-edit-add";
-      addRow.appendChild(sel);
-      const at = document.createElement("span");
-      at.className = "care-edit-add-label";
-      at.textContent = "項目を追加";
-      addRow.appendChild(at);
-      box.appendChild(addRow);
+      box.appendChild(sel);
     }
     body.appendChild(box);
   }
