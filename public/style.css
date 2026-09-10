@@ -747,30 +747,35 @@ label.inline input[type="radio"] {
   opacity: 0.55;
 }
 /* ケア項目の編集ボックス */
+.care-edit-head {
+  margin-bottom: 6px;
+}
 .care-edit .care-edit-title {
-  display: block;
   font-size: 15px;
-  margin-bottom: 8px;
+  font-weight: bold;
+}
+/* 「編集を終える」＝編集モードを閉じるだけ。パネル右上の × で閉じる */
+.care-edit-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  margin: -4px -4px -4px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sub);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.care-edit-close .ico {
+  width: 20px;
+  height: 20px;
 }
 .care-edit .edit-row {
   margin-top: 0;
   min-height: 44px;
   gap: 8px;
-}
-/* 「編集を終える」＝編集モードを閉じるだけ（保存はその都度）なので、
-   目立つ緑ボタンではなく、下端で全幅の控えめなボタンにする */
-.care-edit-done {
-  display: block;
-  width: 100%;
-  margin-top: 12px;
-  min-height: 40px;
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--sub);
-  font-weight: bold;
-}
-.care-edit-done:active {
-  background: var(--card);
 }
 .care-edit .edit-row + .edit-row {
   border-top: 1px solid var(--line);
@@ -789,8 +794,16 @@ label.inline input[type="radio"] {
   padding: 0;
   font-size: 20px;
 }
-.care-edit .add-sel-full {
+/* 項目の追加：ランの回数と同じ「緑の丸＋」（.add-sel）＋ラベル */
+.care-edit-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 10px;
+}
+.care-edit-add-label {
+  font-size: 13px;
+  color: var(--sub);
 }
 /* スワイプ範囲のスキン（行単位／ラップ） */
 .swipe-fg.swipe-fg-row {

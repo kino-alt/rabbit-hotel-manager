@@ -280,8 +280,21 @@ function renderCard(r) {
     box.className = "care-edit";
 
     const h = document.createElement("div");
-    h.className = "care-edit-title";
-    h.textContent = "ケア項目の編集";
+    h.className = "row spread care-edit-head";
+    const ht = document.createElement("span");
+    ht.className = "care-edit-title";
+    ht.textContent = "ケア項目の編集";
+    h.appendChild(ht);
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "care-edit-close";
+    closeBtn.setAttribute("aria-label", "編集を終える");
+    closeBtn.innerHTML = icon("close");
+    closeBtn.addEventListener("click", () => {
+      editing.delete(r.id);
+      render();
+    });
+    h.appendChild(closeBtn);
     box.appendChild(h);
 
     const rows = [
@@ -323,9 +336,10 @@ function renderCard(r) {
     const remaining = careMaster.filter((m) => !allIds.includes(m.id));
     if (remaining.length > 0) {
       const sel = document.createElement("select");
-      sel.className = "grow add-sel-full";
+      sel.className = "add-sel";
+      sel.setAttribute("aria-label", "項目を追加");
       sel.innerHTML =
-        `<option value="">＋ 項目を追加…</option>` +
+        `<option value="">＋</option>` +
         remaining.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
       sel.addEventListener("change", () => {
         if (sel.value)
@@ -333,18 +347,15 @@ function renderCard(r) {
             alertErr,
           );
       });
-      box.appendChild(sel);
+      const addRow = document.createElement("div");
+      addRow.className = "care-edit-add";
+      addRow.appendChild(sel);
+      const at = document.createElement("span");
+      at.className = "care-edit-add-label";
+      at.textContent = "項目を追加";
+      addRow.appendChild(at);
+      box.appendChild(addRow);
     }
-
-    const doneBtn = document.createElement("button");
-    doneBtn.type = "button";
-    doneBtn.className = "care-edit-done";
-    doneBtn.textContent = "編集を終える";
-    doneBtn.addEventListener("click", () => {
-      editing.delete(r.id);
-      render();
-    });
-    box.appendChild(doneBtn);
     body.appendChild(box);
   }
 
