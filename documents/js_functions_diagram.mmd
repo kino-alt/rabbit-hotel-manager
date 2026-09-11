@@ -1,106 +1,173 @@
+%% 改訂4(2026-09)時点。詳細な関数一覧・呼び出し関係は function_relationships.md が正。
+%% 再生成: npx @mermaid-js/mermaid-cli -i js_functions_diagram.mmd -o js_functions_diagram.png -b white
 classDiagram
-    class authJs["auth.js(共通ロジック層)"] {
-      login() ― パスワード照合し匿名ログイン、roleを返す
-      signInAnonymously() ― 匿名ログインを実行する
-      requireAuth() ― 各画面の認証ガード(未ログインならlogin.htmlへ)
-      getRole() / isManager() ― 保存したroleを参照する
-      logout() ― ログアウトしてlogin.htmlへ戻す
-    }
-    class scheduleJs["schedule.js(共通ロジック層)"] {
-      calculateDefaultCareDate() ― お迎え日から逆算しケア日を決める
-      calculatePhotoNeeded() ― 写真が必要な日か自動判定する
-      日付ユーティリティ ― toISO/parseISO/addDays/eachDate/formatJP/isHoliday
-    }
-    class dailyRecordJs["dailyRecord.js(共通ロジック層)"] {
-      getOrCreateDailyRecord(storeId,rabbit,date,holidays) ― 当日の記録が無ければ作る
-      updateCareItem(storeId,rabbit,date,itemId,done) ― ケア項目1つの実施を記録する
-      addCareItemForToday(storeId,rabbit,date,itemId) ― その日だけ項目を追加する
-      removeCareItemForToday(storeId,rabbit,date,itemId) ― その日だけ項目を即時削除する
-      markCareLineSent(storeId,rabbit,date) ― ケアのLINE送信済みにする
-      updateRunCheck(storeId,rabbit,date,index,done) ― ランの実施回数を更新する
-      markRunLineSent(storeId,rabbit,date,index) ― ラン1回分を送信済みにする
-      updatePhotoStatus(storeId,rabbit,date,field,value) ― 写真の状態を更新する
-    }
-    class dbJs["db.js(データアクセス層)"] {
-      getConfig() ― 共通/店長パスワードを取得する
-      saveRabbit() ― うさぎ情報を保存する(新規/更新)
-      getRabbit() ― うさぎ文書を一度だけ取得する
-      subscribeRabbit() ― うさぎ文書1件をリアルタイム購読する
-      subscribeActiveRabbits() ― 非表示でないうさぎ一覧を購読する
-      getAllRabbits() ― 非表示分も含め全うさぎを取得する
-      writeDailyRecord() ― dailyRecordsフィールドを部分更新する
-      bumpTotals() ― careTotals/runTotalを増減する
-      deleteCareItemForDate() ― その日のケア項目を1つ削除する
-      writeSchedules() ― 予定(care/run/photo)をまとめて保存する
-      getCareItemsMaster() / updateCareItemsMaster() ― ケア項目マスタ(配列)
-      getHolidays() / updateHolidays() ― 定休日
-      updatePhotoScheduleRange() ― 複数日の写真要否を編集する
-      hideRabbit() / unhideRabbit() ― 非表示にしTTL起点を記録/取り消す
-      initConfig() / initStore() ― 初期セットアップ用
-    }
+    %% ===== 画面層 =====
     class loginJs["login.js(画面層)"] {
-      onLoginSubmit() ― パスワード送信を受け取る
+      onLoginSubmit() ― パスワード送信を受け取りauth.login()を呼ぶ
     }
     class mainJs["main.js(画面層)"] {
-      requireAuth()/isManager() ― 店長なら店長設定リンクを表示
-      logout() ― ログアウトボタン
+      担当選択画面 ― ケア/ラン/過去の記録/設定へのリンク・ログアウト
+      店舗切替 ― setStoreId()してページ再読み込み
+      全体一覧 ― overviewView.initOverview()を埋め込み表示
     }
     class careJs["care.js(画面層)"] {
-      onCheckboxClick() ― チェック操作を受け取る
-      onAddItemForToday() ― 追加(セレクト)を受け取る
-      onDeleteItemForToday() ― 削除(ボタン)を受け取る
-      onSwipeComplete() ― LINE送信ボタンを受け取る
-      onPhotoCheck() ― 写真チェックを受け取る
-      render() ― 画面を表示し購読を開始する
+      onCheckboxClick() ― ケア項目のチェックを受け取る
+      onAddItemForToday()/onDeleteItemForToday() ― 「項目を編集」の追加/削除
+      onLineSentClick() ― LINE送信ボタン
+      ensureRecords() ― 表示中の日の当日記録を用意する
+      render() ― 一覧を表示し購読を開始する
     }
     class runJs["run.js(画面層)"] {
-      onRunCheckToggle() ― ラン実施チェックを受け取る
-      onRunSwipeSent() ― ラン送信ボタンを受け取る
-      onPhotoCheck() ― 写真チェックを受け取る
-      render() ― 画面を表示し購読を開始する
+      onRunCheckToggle() ― ラン実施回数の増減を受け取る
+      onRunSent() ― ラン送信ボタン
+      onPhotoCheck() ― 写真の撮影済み/送信済みチェック
+      ensureRecords() ― 表示中の日の当日記録を用意する
+      render() ― 一覧を表示し購読を開始する
     }
     class registerJs["register.js(画面層)"] {
-      onSubmit() ― 登録/編集フォームを受け取る
-      onAddAnotherRabbit() ― 同グループで続けて登録する
-      onSaveSchedule() ― 宿泊全体の予定を保存する
+      起動時 ― getStoreConfig()→subscribeRabbit()(編集時)
+      rebuildGridEntries() ― STEP2グリッドを組み立てる(scheduleGrid.buildEntry)
+      onSave() ― entryToSchedules()→saveRabbit()/writeSchedulesMerge()
       onHideRabbit() ― 宿泊終了(非表示)にする
     }
-    class overviewJs["overview.js(画面層)"] {
-      render() ― 一覧を表示する
-      getCellStatus() ― 予定か実績かを判定し表示する
-    }
     class adminJs["admin.js(画面層)"] {
-      onUpdateCareItemsMaster() ― マスタ編集を受け取る
-      onUpdateHolidays() ― 定休日編集を受け取る
-      onUpdatePhotoScheduleRange() ― 写真の一括編集を受け取る
+      店舗設定編集 ― ケア項目マスタ/定休日/繁忙期(変更は自動保存)
+      設定パスワード確認 ― verifyManagerPassword()
+      ログインパスワード変更 ― changeStaffPassword()
     }
     class historyJs["history.js(画面層)"] {
-      loadPastRecords() ― 過去記録の参照を受け取る
+      起動時 ― getStoreConfig()+getAllRabbits()
+      render() ― 月ごとに宿泊終了(isStayEnded)ぶんを絞りscheduleGridHTML()で表示(閲覧専用)
     }
     class setupJs["setup.js(画面層・初回のみ)"] {
-      onSubmit() ― 初期値の投入を受け取る
+      onSubmit() ― 設定パスワード・ケア項目・定休日の初期値をinitConfig()/initStore()で投入
+    }
+    class seedStoresJs["seed-stores.js(画面層・初回のみ)"] {
+      onSeed() ― store_1/store_2の初期登録とTTL用の仮うさぎ作成
     }
 
+    %% ===== 画面部品(複数画面/専用画面で共用) =====
+    class overviewViewJs["overviewView.js(画面部品)"] {
+      initOverview() ― main.htmlの全体一覧(本日から7日)を描画・購読
+      rabbitScheduleTableHTML() ― ケア/ラン担当画面のうさぎ別テーブル
+      scheduleGridHTML(rabbits,dates,ctx,opts) ― 日付×うさぎのグリッド本体。全体一覧とhistory.jsで共用
+    }
+    class registerGridViewJs["registerGridView.js(画面部品・register専用)"] {
+      scheduleTableHTML() ― STEP2の滞在期間グリッドHTML生成
+      careBreakdownHTML() ― ケア項目の内訳表HTML生成
+    }
+
+    %% ===== 共通ロジック層 =====
+    class authJs["auth.js(共通ロジック層)"] {
+      login(pw) ― signInWithEmailAndPassword(STAFF_EMAIL,pw)
+      verifyManagerPassword(pw) ― config/common.managerPasswordと照合
+      changeStaffPassword(cur,next) ― 再認証してupdatePassword
+      requireAuth(onReady) ― 各画面の認証ガード(未ログインならlogin.htmlへ)
+      requireLogin(onReady,onMissing) ― setup/seed-stores用
+      logout() ― signOutしてlogin.htmlへ
+    }
+    class scheduleJs["schedule.js(共通ロジック層・純粋)"] {
+      careOnDate(rabbit,date,countableIds) ― その日のケア状態を予定+当日記録から統合(画面はこれだけを見る)
+      runOnDate(rabbit,date) ― その日のラン状態
+      calculatePhotoNeeded() ― 写真要否の自動判定
+      calculateDefaultCareDate() ― お迎え日から逆算しケア日を決める
+      isStayEnded(rabbit) ― 宿泊終了か(hiddenAtあり or お迎え日超過)
+      isBusyPeriod()/countableIdSet() ― 繁忙期判定/回数式項目ID集合
+      日付ユーティリティ ― toISO/parseISO/addDays/eachDate/formatJP/isHoliday ほか
+    }
+    class scheduleGridJs["scheduleGrid.js(共通ロジック層・純粋・register STEP2専用)"] {
+      buildEntry(shared,card,prev,ctx) ― STEP1入力+直前の作業からentryを組み立てる
+      entryToSchedules(entry) ― entry→careSchedule/careCounts/runSchedule
+      careScheduleShape()/careUnitsOnDay() ほか ― グリッド集計ヘルパー
+    }
+    class dailyRecordJs["dailyRecord.js(共通ロジック層)"] {
+      getOrCreateDailyRecord() ― 当日の記録が無ければ予定からコピーして新規作成
+      reconcileDailyRecord() ― 既存の当日記録を予定へ合わせる(register保存直後)
+      updateCareItem()/setCareCount() ― ケア項目の実施(チェック/回数)を更新
+      addCareToday()/removeCareToday()/setCareNeedToday() ― 「項目を編集」(予定+当日記録の両方)
+      setCareDone()/markCareLineSent()/unmarkCareLineSent() ― ケア完了・LINE送信
+      updateRunCheck()/markRunLineSent()/unmarkRunLineSent() ― ラン実施・LINE送信
+      updatePhotoStatus() ― 写真needed/taken/sentの更新
+    }
+
+    %% ===== 純粋モジュール(DOM非依存・tests/対象) =====
+    class scheduleMergeJs["scheduleMerge.js(純粋・テスト対象)"] {
+      computeSchedulePatch(base,server,next) ― 予定の3-wayマージ判定(register保存用)
+    }
+    class careReconcileJs["careReconcile.js(純粋・テスト対象)"] {
+      reconcileCare() ― 当日記録のcareを予定へ合わせる
+      computeAllDone() ― 全項目完了かを判定
+    }
+
+    %% ===== 小さな共通部品 =====
+    class escJs["esc.js"] { esc() ― HTMLエスケープ }
+    class swipeJs["swipe.js"] { enableSwipeComplete() ― スワイプ完了操作 }
+    class toastJs["toast.js"] { notifyWriteError() ― 書き込み失敗トースト }
+    class iconsJs["icons.js"] { icon() ― SVGアイコン生成ヘルパー }
+
+    %% ===== データアクセス層 =====
+    class dbJs["db.js(データアクセス層)"] {
+      getConfig()/initConfig() ― config/commonの取得・初期作成
+      saveRabbit()/subscribeRabbit() ― うさぎ文書の保存・単体購読
+      subscribeActiveRabbits()/subscribeAllRabbits()/getAllRabbits() ― うさぎ一覧の購読・取得
+      writeDailyRecord()/patchRabbit() ― dailyRecordsのマージ書き込み・field path更新
+      patchScheduleDay() ― 予定を1項目/1日単位で更新(arrayUnion/arrayRemove)
+      writeSchedulesMerge() ― register保存用runTransaction(3-wayマージ)
+      hideRabbit()/unhideRabbit() ― 宿泊終了(hiddenAt/expireAt)の設定・解除
+      getStoreConfig()/subscribeStoreConfig() ― 店舗設定を1回の読み取り/購読でまとめて取得
+      getCareItemsMaster()/updateCareItemsMaster()/updateHolidays()/updateBusyPeriods() ― 店舗設定の個別更新
+      initStore() ― 初期セットアップ用
+    }
+
+    %% ===== 依存関係 =====
     loginJs --> authJs
     mainJs --> authJs
+    mainJs --> overviewViewJs
     careJs --> authJs
-    runJs --> authJs
-    registerJs --> authJs
-    overviewJs --> authJs
-    adminJs --> authJs
-    historyJs --> authJs
-    setupJs --> authJs
-    authJs --> dbJs
-    careJs --> dailyRecordJs
-    runJs --> dailyRecordJs
     careJs --> dbJs
+    careJs --> dailyRecordJs
+    careJs --> scheduleJs
+    careJs --> overviewViewJs
+    careJs --> toastJs
+    careJs --> swipeJs
+    careJs --> escJs
+    careJs --> iconsJs
+    runJs --> authJs
     runJs --> dbJs
-    registerJs --> scheduleJs
-    overviewJs --> scheduleJs
-    dailyRecordJs --> scheduleJs
-    dailyRecordJs --> dbJs
+    runJs --> dailyRecordJs
+    runJs --> scheduleJs
+    runJs --> overviewViewJs
+    runJs --> toastJs
+    runJs --> swipeJs
+    runJs --> escJs
+    runJs --> iconsJs
+    registerJs --> authJs
     registerJs --> dbJs
-    overviewJs --> dbJs
+    registerJs --> dailyRecordJs
+    registerJs --> scheduleJs
+    registerJs --> scheduleGridJs
+    registerJs --> registerGridViewJs
+    registerGridViewJs --> escJs
+    registerGridViewJs --> scheduleJs
+    registerGridViewJs --> scheduleGridJs
+    adminJs --> authJs
     adminJs --> dbJs
+    adminJs --> scheduleJs
+    adminJs --> iconsJs
+    historyJs --> authJs
     historyJs --> dbJs
+    historyJs --> scheduleJs
+    historyJs --> overviewViewJs
+    setupJs --> authJs
     setupJs --> dbJs
+    seedStoresJs --> authJs
+    seedStoresJs --> dbJs
+    overviewViewJs --> dbJs
+    overviewViewJs --> scheduleJs
+    overviewViewJs --> escJs
+    authJs --> dbJs
+    dbJs --> scheduleMergeJs
+    dailyRecordJs --> dbJs
+    dailyRecordJs --> scheduleJs
+    dailyRecordJs --> careReconcileJs
+    scheduleGridJs --> scheduleJs

@@ -131,7 +131,8 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
 
 ## Firestore データ構造
 
-設計資料 `documents/firestore_data_structure_final.md` に準拠。
+以下が現在の構造(最終形)。設計からの変更点・検討したが採用しなかった案は
+`documents/firestore_data_structure_final.md` にまとめている。
 
 ```
 config/common

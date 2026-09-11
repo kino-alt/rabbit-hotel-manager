@@ -1,164 +1,265 @@
 digraph G {
+  // 改訂4(2026-09):実装(function_relationships.md)に合わせて関数一覧・依存関係を更新
   rankdir=TB;
   bgcolor="white";
   fontname="Noto Sans CJK JP";
   node [shape=plaintext, fontname="Noto Sans CJK JP"];
   edge [fontname="Noto Sans CJK JP", fontsize=10, color="#5F5E5A"];
 
-  // 改訂3:実装に合わせて関数一覧・引数・呼び出し関係を更新
-
-  authJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>auth.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">login(inputPassword)</FONT><BR/><FONT POINT-SIZE="9">パスワード照合し匿名ログイン、roleを返す</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">signInAnonymously()</FONT><BR/><FONT POINT-SIZE="9">匿名ログインを実行する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireAuth(onReady)</FONT><BR/><FONT POINT-SIZE="9">各画面の認証ガード</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getRole() / isManager()</FONT><BR/><FONT POINT-SIZE="9">保存したroleを参照する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">logout()</FONT><BR/><FONT POINT-SIZE="9">ログアウトしてlogin.htmlへ戻す</FONT></TD></TR>
-    </TABLE>
-  >];
-
-  scheduleJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>schedule.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">calculateDefaultCareDate(pickupDate, holidays)</FONT><BR/><FONT POINT-SIZE="9">お迎え日から逆算しケア日を決める</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">calculatePhotoNeeded(date, careSchedule, runSchedule, holidays)</FONT><BR/><FONT POINT-SIZE="9">写真が必要な日か自動判定する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">日付ユーティリティ</FONT><BR/><FONT POINT-SIZE="9">toISO/parseISO/addDays/eachDate/formatJP/isHoliday</FONT></TD></TR>
-    </TABLE>
-  >];
-
-  dailyRecordJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>dailyRecord.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層 ― 引数は (storeId, rabbit, date, ...)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getOrCreateDailyRecord()</FONT><BR/><FONT POINT-SIZE="9">当日の記録が無ければ作る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updateCareItem()</FONT><BR/><FONT POINT-SIZE="9">ケア項目1つの実施を記録する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">addCareItemForToday()</FONT><BR/><FONT POINT-SIZE="9">その日だけ項目を追加する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">removeCareItemForToday()</FONT><BR/><FONT POINT-SIZE="9">その日だけ項目を即時削除する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">markCareLineSent()</FONT><BR/><FONT POINT-SIZE="9">ケアのLINE送信済みにする</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updateRunCheck()</FONT><BR/><FONT POINT-SIZE="9">ランの実施回数を更新する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">markRunLineSent()</FONT><BR/><FONT POINT-SIZE="9">ラン1回分を送信済みにする</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updatePhotoStatus()</FONT><BR/><FONT POINT-SIZE="9">写真の状態を更新する</FONT></TD></TR>
-    </TABLE>
-  >];
-
-  dbJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#9FE1CB"><FONT POINT-SIZE="13"><B>db.js</B></FONT><BR/><FONT POINT-SIZE="10">データアクセス層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getConfig()</FONT><BR/><FONT POINT-SIZE="9">共通/店長パスワードを取得する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">saveRabbit() / getRabbit()</FONT><BR/><FONT POINT-SIZE="9">うさぎ情報を保存/一度だけ取得する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">subscribeRabbit()</FONT><BR/><FONT POINT-SIZE="9">うさぎ文書1件をリアルタイム購読する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">subscribeActiveRabbits() / getAllRabbits()</FONT><BR/><FONT POINT-SIZE="9">うさぎ一覧を購読/全件取得する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">writeDailyRecord()</FONT><BR/><FONT POINT-SIZE="9">dailyRecordsフィールドを部分更新する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">bumpTotals()</FONT><BR/><FONT POINT-SIZE="9">careTotals/runTotalを増減する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">deleteCareItemForDate()</FONT><BR/><FONT POINT-SIZE="9">その日のケア項目を1つ削除する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">writeSchedules()</FONT><BR/><FONT POINT-SIZE="9">予定(care/run/photo)をまとめて保存する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getCareItemsMaster() / updateCareItemsMaster()</FONT><BR/><FONT POINT-SIZE="9">ケア項目マスタ(店舗文書の配列フィールド)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getHolidays() / updateHolidays()</FONT><BR/><FONT POINT-SIZE="9">定休日 { weekdays, dates }</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updatePhotoScheduleRange()</FONT><BR/><FONT POINT-SIZE="9">複数日の写真要否を編集する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">hideRabbit() / unhideRabbit()</FONT><BR/><FONT POINT-SIZE="9">非表示にしTTL起点(expireAt)を記録/取り消す</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">initConfig() / initStore()</FONT><BR/><FONT POINT-SIZE="9">初期セットアップ用</FONT></TD></TR>
-    </TABLE>
-  >];
+  // 色: 画面層=#F5C4B3 / 画面部品=#FADCC9 / 共通ロジック層=#CECBF6
+  //     純粋モジュール=#FFF3B0 / 小さな共通部品=#E4E4E0 / データアクセス層=#9FE1CB
 
   loginJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>login.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onLoginSubmit()</FONT><BR/><FONT POINT-SIZE="9">パスワード送信を受け取る</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onLoginSubmit()</FONT><BR/><FONT POINT-SIZE="9">パスワード送信を受け取りauth.login()を呼ぶ</FONT></TD></TR>
     </TABLE>
   >];
 
   mainJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>main.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireAuth() / isManager()</FONT><BR/><FONT POINT-SIZE="9">店長なら店長設定リンクを表示</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">logout()</FONT><BR/><FONT POINT-SIZE="9">ログアウトボタン</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">担当選択画面</FONT><BR/><FONT POINT-SIZE="9">ケア/ラン/過去の記録/設定リンク・ログアウト</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">店舗切替</FONT><BR/><FONT POINT-SIZE="9">setStoreId()してページ再読み込み</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">全体一覧</FONT><BR/><FONT POINT-SIZE="9">overviewView.initOverview()を埋め込み表示</FONT></TD></TR>
     </TABLE>
   >];
 
   careJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>care.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onCheckboxClick()</FONT><BR/><FONT POINT-SIZE="9">チェック操作を受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onAddItemForToday()</FONT><BR/><FONT POINT-SIZE="9">追加(セレクト)を受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onDeleteItemForToday()</FONT><BR/><FONT POINT-SIZE="9">削除(ボタン)を受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSwipeComplete()</FONT><BR/><FONT POINT-SIZE="9">LINE送信ボタンを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onPhotoCheck()</FONT><BR/><FONT POINT-SIZE="9">写真チェックを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">画面を表示し購読を開始する</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onCheckboxClick()</FONT><BR/><FONT POINT-SIZE="9">ケア項目のチェックを受け取る</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onAddItemForToday() / onDeleteItemForToday()</FONT><BR/><FONT POINT-SIZE="9">「項目を編集」の追加/削除</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onLineSentClick()</FONT><BR/><FONT POINT-SIZE="9">LINE送信ボタン</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">ensureRecords()</FONT><BR/><FONT POINT-SIZE="9">表示中の日の当日記録を用意する</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">一覧を表示し購読を開始する</FONT></TD></TR>
     </TABLE>
   >];
 
   runJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>run.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onRunCheckToggle()</FONT><BR/><FONT POINT-SIZE="9">ラン実施チェックを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onRunSwipeSent()</FONT><BR/><FONT POINT-SIZE="9">ラン送信ボタンを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onPhotoCheck()</FONT><BR/><FONT POINT-SIZE="9">写真チェックを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">画面を表示し購読を開始する</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onRunCheckToggle()</FONT><BR/><FONT POINT-SIZE="9">ラン実施回数の増減を受け取る</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onRunSent()</FONT><BR/><FONT POINT-SIZE="9">ラン送信ボタン</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onPhotoCheck()</FONT><BR/><FONT POINT-SIZE="9">写真の撮影済み/送信済みチェック</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">ensureRecords()</FONT><BR/><FONT POINT-SIZE="9">表示中の日の当日記録を用意する</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">一覧を表示し購読を開始する</FONT></TD></TR>
     </TABLE>
   >];
 
   registerJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>register.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSubmit()</FONT><BR/><FONT POINT-SIZE="9">登録/編集フォームを受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onAddAnotherRabbit()</FONT><BR/><FONT POINT-SIZE="9">同グループで続けて登録する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSaveSchedule()</FONT><BR/><FONT POINT-SIZE="9">宿泊全体の予定を保存する</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">起動時</FONT><BR/><FONT POINT-SIZE="9">getStoreConfig()→subscribeRabbit()(編集時)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">rebuildGridEntries()</FONT><BR/><FONT POINT-SIZE="9">STEP2グリッドを組み立てる(scheduleGrid.buildEntry)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSave()</FONT><BR/><FONT POINT-SIZE="9">entryToSchedules()→saveRabbit()/writeSchedulesMerge()</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onHideRabbit()</FONT><BR/><FONT POINT-SIZE="9">宿泊終了(非表示)にする</FONT></TD></TR>
-    </TABLE>
-  >];
-
-  overviewJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>overview.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">一覧を表示する</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getCellStatus()</FONT><BR/><FONT POINT-SIZE="9">予定か実績かを判定し表示する(記録は生成しない)</FONT></TD></TR>
     </TABLE>
   >];
 
   adminJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>admin.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層(店長のみ)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onUpdateCareItemsMaster()</FONT><BR/><FONT POINT-SIZE="9">マスタ編集を受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onUpdateHolidays()</FONT><BR/><FONT POINT-SIZE="9">定休日編集を受け取る</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onUpdatePhotoScheduleRange()</FONT><BR/><FONT POINT-SIZE="9">写真の一括編集を受け取る</FONT></TD></TR>
+      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>admin.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">店舗設定編集</FONT><BR/><FONT POINT-SIZE="9">ケア項目マスタ/定休日/繁忙期(変更は自動保存)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">設定パスワード確認</FONT><BR/><FONT POINT-SIZE="9">verifyManagerPassword()</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">ログインパスワード変更</FONT><BR/><FONT POINT-SIZE="9">changeStaffPassword()</FONT></TD></TR>
     </TABLE>
   >];
 
   historyJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>history.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">loadPastRecords()</FONT><BR/><FONT POINT-SIZE="9">過去記録の参照を受け取る</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">起動時</FONT><BR/><FONT POINT-SIZE="9">getStoreConfig()+getAllRabbits()</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">render()</FONT><BR/><FONT POINT-SIZE="9">月ごとに宿泊終了(isStayEnded)ぶんを絞りscheduleGridHTML()で表示(閲覧専用)</FONT></TD></TR>
     </TABLE>
   >];
 
   setupJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>setup.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層(初回のみ)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSubmit()</FONT><BR/><FONT POINT-SIZE="9">初期値の投入を受け取る</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSubmit()</FONT><BR/><FONT POINT-SIZE="9">設定パスワード・ケア項目・定休日をinitConfig()/initStore()で投入</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  seedStoresJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>seed-stores.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層(初回のみ)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSeed()</FONT><BR/><FONT POINT-SIZE="9">store_1/store_2の初期登録とTTL用の仮うさぎ作成</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  overviewViewJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#FADCC9"><FONT POINT-SIZE="13"><B>overviewView.js</B></FONT><BR/><FONT POINT-SIZE="10">画面部品(main/care/run/historyで共用)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">initOverview()</FONT><BR/><FONT POINT-SIZE="9">main.htmlの全体一覧(本日から7日)を描画・購読</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">rabbitScheduleTableHTML()</FONT><BR/><FONT POINT-SIZE="9">ケア/ラン担当画面のうさぎ別テーブル</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">scheduleGridHTML(rabbits,dates,ctx,opts)</FONT><BR/><FONT POINT-SIZE="9">日付×うさぎのグリッド本体。全体一覧とhistory.jsで共用</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  registerGridViewJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#FADCC9"><FONT POINT-SIZE="13"><B>registerGridView.js</B></FONT><BR/><FONT POINT-SIZE="10">画面部品(register専用)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">scheduleTableHTML()</FONT><BR/><FONT POINT-SIZE="9">STEP2の滞在期間グリッドHTML生成</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">careBreakdownHTML()</FONT><BR/><FONT POINT-SIZE="9">ケア項目の内訳表HTML生成</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  authJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>auth.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">login(pw)</FONT><BR/><FONT POINT-SIZE="9">signInWithEmailAndPassword(STAFF_EMAIL,pw)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">verifyManagerPassword(pw)</FONT><BR/><FONT POINT-SIZE="9">config/common.managerPasswordと照合</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">changeStaffPassword(cur,next)</FONT><BR/><FONT POINT-SIZE="9">再認証してupdatePassword</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireAuth(onReady)</FONT><BR/><FONT POINT-SIZE="9">各画面の認証ガード(未ログインならlogin.htmlへ)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireLogin(onReady,onMissing)</FONT><BR/><FONT POINT-SIZE="9">setup/seed-stores用</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">logout()</FONT><BR/><FONT POINT-SIZE="9">signOutしてlogin.htmlへ</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  scheduleJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>schedule.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層・純粋</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">careOnDate(rabbit,date,countableIds)</FONT><BR/><FONT POINT-SIZE="9">その日のケア状態を予定+当日記録から統合(画面はこれだけを見る)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">runOnDate(rabbit,date)</FONT><BR/><FONT POINT-SIZE="9">その日のラン状態</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">calculatePhotoNeeded()</FONT><BR/><FONT POINT-SIZE="9">写真要否の自動判定</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">calculateDefaultCareDate()</FONT><BR/><FONT POINT-SIZE="9">お迎え日から逆算しケア日を決める</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">isStayEnded(rabbit)</FONT><BR/><FONT POINT-SIZE="9">宿泊終了か(hiddenAtあり or お迎え日超過)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">isBusyPeriod() / countableIdSet()</FONT><BR/><FONT POINT-SIZE="9">繁忙期判定/回数式項目ID集合</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">日付ユーティリティ</FONT><BR/><FONT POINT-SIZE="9">toISO/parseISO/addDays/eachDate/formatJP/isHoliday ほか</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  scheduleGridJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>scheduleGrid.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層・純粋・register STEP2専用</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">buildEntry(shared,card,prev,ctx)</FONT><BR/><FONT POINT-SIZE="9">STEP1入力+直前の作業からentryを組み立てる</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">entryToSchedules(entry)</FONT><BR/><FONT POINT-SIZE="9">entry→careSchedule/careCounts/runSchedule</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">careScheduleShape() / careUnitsOnDay() ほか</FONT><BR/><FONT POINT-SIZE="9">グリッド集計ヘルパー</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  dailyRecordJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#CECBF6"><FONT POINT-SIZE="13"><B>dailyRecord.js</B></FONT><BR/><FONT POINT-SIZE="10">共通ロジック層</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getOrCreateDailyRecord()</FONT><BR/><FONT POINT-SIZE="9">当日の記録が無ければ予定からコピーして新規作成</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">reconcileDailyRecord()</FONT><BR/><FONT POINT-SIZE="9">既存の当日記録を予定へ合わせる(register保存直後)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updateCareItem() / setCareCount()</FONT><BR/><FONT POINT-SIZE="9">ケア項目の実施(チェック/回数)を更新</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">addCareToday() / removeCareToday() / setCareNeedToday()</FONT><BR/><FONT POINT-SIZE="9">「項目を編集」(予定+当日記録の両方)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">setCareDone() / markCareLineSent() / unmarkCareLineSent()</FONT><BR/><FONT POINT-SIZE="9">ケア完了・LINE送信</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updateRunCheck() / markRunLineSent() / unmarkRunLineSent()</FONT><BR/><FONT POINT-SIZE="9">ラン実施・LINE送信</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">updatePhotoStatus()</FONT><BR/><FONT POINT-SIZE="9">写真needed/taken/sentの更新</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  scheduleMergeJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#FFF3B0"><FONT POINT-SIZE="13"><B>scheduleMerge.js</B></FONT><BR/><FONT POINT-SIZE="10">純粋モジュール・テスト対象</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">computeSchedulePatch(base,server,next)</FONT><BR/><FONT POINT-SIZE="9">予定の3-wayマージ判定(register保存用)</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  careReconcileJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#FFF3B0"><FONT POINT-SIZE="13"><B>careReconcile.js</B></FONT><BR/><FONT POINT-SIZE="10">純粋モジュール・テスト対象</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">reconcileCare()</FONT><BR/><FONT POINT-SIZE="9">当日記録のcareを予定へ合わせる</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">computeAllDone()</FONT><BR/><FONT POINT-SIZE="9">全項目完了かを判定</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  escJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#E4E4E0"><FONT POINT-SIZE="13"><B>esc.js</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">esc()</FONT><BR/><FONT POINT-SIZE="9">HTMLエスケープ</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  swipeJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#E4E4E0"><FONT POINT-SIZE="13"><B>swipe.js</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">enableSwipeComplete()</FONT><BR/><FONT POINT-SIZE="9">スワイプ完了操作</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  toastJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#E4E4E0"><FONT POINT-SIZE="13"><B>toast.js</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">notifyWriteError()</FONT><BR/><FONT POINT-SIZE="9">書き込み失敗トースト</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  iconsJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#E4E4E0"><FONT POINT-SIZE="13"><B>icons.js</B></FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">icon()</FONT><BR/><FONT POINT-SIZE="9">SVGアイコン生成ヘルパー</FONT></TD></TR>
+    </TABLE>
+  >];
+
+  dbJs [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
+      <TR><TD BGCOLOR="#9FE1CB"><FONT POINT-SIZE="13"><B>db.js</B></FONT><BR/><FONT POINT-SIZE="10">データアクセス層</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getConfig() / initConfig()</FONT><BR/><FONT POINT-SIZE="9">config/commonの取得・初期作成</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">saveRabbit() / subscribeRabbit()</FONT><BR/><FONT POINT-SIZE="9">うさぎ文書の保存・単体購読</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">subscribeActiveRabbits() / subscribeAllRabbits() / getAllRabbits()</FONT><BR/><FONT POINT-SIZE="9">うさぎ一覧の購読・取得</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">writeDailyRecord() / patchRabbit()</FONT><BR/><FONT POINT-SIZE="9">dailyRecordsのマージ書き込み・field path更新</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">patchScheduleDay()</FONT><BR/><FONT POINT-SIZE="9">予定を1項目/1日単位で更新(arrayUnion/arrayRemove)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">writeSchedulesMerge()</FONT><BR/><FONT POINT-SIZE="9">register保存用runTransaction(3-wayマージ)</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">hideRabbit() / unhideRabbit()</FONT><BR/><FONT POINT-SIZE="9">宿泊終了(hiddenAt/expireAt)の設定・解除</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getStoreConfig() / subscribeStoreConfig()</FONT><BR/><FONT POINT-SIZE="9">店舗設定を1回の読み取り/購読でまとめて取得</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getCareItemsMaster() / updateCareItemsMaster() / updateHolidays() / updateBusyPeriods()</FONT><BR/><FONT POINT-SIZE="9">店舗設定の個別更新</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">initStore()</FONT><BR/><FONT POINT-SIZE="9">初期セットアップ用</FONT></TD></TR>
     </TABLE>
   >];
 
   loginJs -> authJs;
   mainJs -> authJs;
+  mainJs -> overviewViewJs;
   careJs -> authJs;
-  runJs -> authJs;
-  registerJs -> authJs;
-  overviewJs -> authJs;
-  adminJs -> authJs;
-  historyJs -> authJs;
-  setupJs -> authJs;
-  authJs -> dbJs;
-  careJs -> dailyRecordJs;
-  runJs -> dailyRecordJs;
   careJs -> dbJs;
+  careJs -> dailyRecordJs;
+  careJs -> scheduleJs;
+  careJs -> overviewViewJs;
+  careJs -> toastJs;
+  careJs -> swipeJs;
+  careJs -> escJs;
+  careJs -> iconsJs;
+  runJs -> authJs;
   runJs -> dbJs;
-  registerJs -> scheduleJs;
-  overviewJs -> scheduleJs;
-  dailyRecordJs -> scheduleJs;
-  dailyRecordJs -> dbJs;
+  runJs -> dailyRecordJs;
+  runJs -> scheduleJs;
+  runJs -> overviewViewJs;
+  runJs -> toastJs;
+  runJs -> swipeJs;
+  runJs -> escJs;
+  runJs -> iconsJs;
+  registerJs -> authJs;
   registerJs -> dbJs;
-  overviewJs -> dbJs;
+  registerJs -> dailyRecordJs;
+  registerJs -> scheduleJs;
+  registerJs -> scheduleGridJs;
+  registerJs -> registerGridViewJs;
+  registerGridViewJs -> escJs;
+  registerGridViewJs -> scheduleJs;
+  registerGridViewJs -> scheduleGridJs;
+  adminJs -> authJs;
   adminJs -> dbJs;
+  adminJs -> scheduleJs;
+  adminJs -> iconsJs;
+  historyJs -> authJs;
   historyJs -> dbJs;
+  historyJs -> scheduleJs;
+  historyJs -> overviewViewJs;
+  setupJs -> authJs;
   setupJs -> dbJs;
+  seedStoresJs -> authJs;
+  seedStoresJs -> dbJs;
+  overviewViewJs -> dbJs;
+  overviewViewJs -> scheduleJs;
+  overviewViewJs -> escJs;
+  authJs -> dbJs;
+  dbJs -> scheduleMergeJs;
+  dailyRecordJs -> dbJs;
+  dailyRecordJs -> scheduleJs;
+  dailyRecordJs -> careReconcileJs;
+  scheduleGridJs -> scheduleJs;
 }
