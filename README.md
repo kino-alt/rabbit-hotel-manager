@@ -206,8 +206,7 @@ tests/ … 純粋ロジックのテスト(node --test)
 
 ## Firestore データ構造
 
-以下が現在の構造(最終形)。設計からの変更点・検討したが採用しなかった案は
-`documents/firestore_data_structure_final.md` にまとめている。
+以下が現在の構造(最終形)。
 
 ```
 config/common
@@ -243,6 +242,32 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 `dailyRecords` は設計資料の指示どおり**サブコレクションではなくうさぎ文書内のフィールド**です
 (6ヶ月後のTTL自動削除で消し残りが起きないように)。
 
+### 設計の基本方針
+
+| 仕組み | 目的 |
+|---|---|
+| `config`と`stores`を分離 | パスワードのみ全店舗共通、それ以外(ケア項目マスタ・定休日)は店舗ごとに管理するため |
+| `careSchedule` / `runSchedule` | 宿泊登録時に「いつ・何を」やるかをあらかじめ割り振り、日ごとに違う内容にできるようにするため |
+| `dailyRecords`が予定と別に存在 | 当日の実施状況・LINE送信状況を記録し、かつ予定にない臨機応変な追加・削除にも対応するため |
+| `hiddenAt` + Firestore TTL(`expireAt`) | 非表示後6ヶ月で自動的にデータを削除し、手動でのバックアップ作業を不要にするため |
+
+### サブコレクションをやめてフィールドにした効果
+
+`dailyRecords`・`careItemsMaster`はどちらも、当初案の「サブコレクション」ではなく**文書内のフィールド**にした。
+
+| 項目 | サブコレクションのままだった場合 | フィールドにした場合(採用) |
+|---|---|---|
+| 6ヶ月後の自動削除 | 親文書は消えるが、サブコレクションは消し残る | 親文書ごと消えるので、記録も一緒に消える |
+| 今日の記録を見る時 | うさぎ情報とdailyRecordsを別々に読みに行く必要がある | うさぎの文書1回読むだけで両方揃う(読み込み回数が減り効率化) |
+| 過去の記録参照 | 専用の関数(`getDailyRecordsRange`)が必要 | 同じ文書内を見るだけで済み、専用関数が不要になる |
+
+### 検討したが採用しなかったもの
+
+- **Firebase Storage(写真ファイルの保存)**：写真自体は保存せず、「必要か/撮影済みか/送信済みか」という状態のみ管理するため不要
+- **`careItems`(宿泊専用のケア項目テンプレート)**：`careSchedule`が同じ役割を兼ねるため不要
+- **定期バックアップの仕組み**：6ヶ月間はFirestoreに記録が残るため、別途のバックアップは行わない
+- **`config/common`の`commonPassword`**：ログインパスワードはFirestoreではなくFirebase Auth側が持つため不要（`managerPassword`のみ残す）
+
 ## 設計資料からの差分(実装上の判断)
 
 | 箇所 | 資料 | 実装 | 理由 |
@@ -250,6 +275,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 | ケア項目 | `careItemsMaster` サブコレクション | 店舗文書内の**配列フィールド** | 設定画面で「まとめて編集」するため、配列の方が読み書きが1回で済み無料枠に優しい |
 | 定休日 | 「定休日リスト」 | `{ weekdays, dates }` | 毎週の定休曜日と臨時休業日の両方を扱えるように |
 | うさぎ一覧の取得 | 資料は `subscribeRabbit`(単体)のみ記載 | 全体一覧=`subscribeActiveRabbits`(hiddenAt==null)／ケア・ラン=`subscribeAllRabbits`(終了ぶんも)／過去の記録=`getAllRabbits`→`isStayEnded`で絞る | 宿泊終了しても、その滞在期間の日付にはケア/ラン担当で記録が残って見えるように |
+| 写真の予定 | `photoSchedule`(日ごとの写真要否を予定として持つ) | **廃止**。当日記録`photo.needed`＋自動判定`calculatePhotoNeeded()`に一本化 | 書き込む画面が実装されず常に空で、他の予定マップと値の型も違い混乱のもとだった |
 | 「宿泊終了」の判定 | 資料は明記なし | `schedule.isStayEnded(r)`＝`hiddenAt`あり **or** お迎え日<今日（当日は除く） | 「宿泊終了」ボタンの押し忘れを日付で自動カバー。`hiddenAt` は別途 TTL(6ヶ月後削除)の起点なのでボタン運用は残す |
 | スワイプ操作の範囲 | 全操作をスワイプ | **完了確定・LINE送信済みにする操作だけ**スワイプ(`swipe.js`)。項目の追加/削除・回数の増減・チェックは誤操作防止のためボタン/チェックボックス | 取り消しにくい操作(送信済みにする等)だけをスワイプにし、日常的に触る操作は確実な形にするため。呼ぶ関数(`markCareLineSent` 等)は資料どおり |
 | `getOrCreateDailyRecord` の引数 | `(rabbitId, date)` | `(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | 購読中の文書と店舗設定を渡して読み取り回数を減らすため |
@@ -264,7 +290,8 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
   - ケア担当「項目を編集」→ `db.patchScheduleDay()`（`arrayUnion`/`arrayRemove` で1項目単位）
   - 登録画面の保存 → `db.writeSchedulesMerge()`（`runTransaction` 内で base/server/next の3-wayマージ。利用者が変えた日だけを field path で書く）
 - **登録画面**：`subscribeRabbit()` で最新を保持。保存後は影響した日の既存 `dailyRecords` を `reconcileDailyRecord()` で予定に合わせる。
-- **残る割り切り**：同じうさぎ・同じ日を2人が同時に別内容へ編集した場合は最後の書き込みが勝つ（セマンティックな衝突のためトランザクションでも解決しない）。
+- **残る割り切り**：`saveRabbit()` のスカラー項目（氏名・日程など）は最後の書き込みが勝つ（低リスクのため許容）。
+  同じうさぎ・同じ日を2人が同時に別内容へ編集した場合も最後の書き込みが勝つ（セマンティックな衝突のためトランザクションでも解決しない）。
 
 詳細は `documents/function_relationships.md` を参照。
 

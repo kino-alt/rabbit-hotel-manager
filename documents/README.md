@@ -5,7 +5,6 @@
 
 | ファイル名 | 内容 |
 |---|---|
-| `firestore_data_structure_final.md` | Firestoreのデータ構造の設計メモ(なぜこの形にしたか・検討して採用しなかった案) |
 | `function_relationships.md` | ファイルごとの関数一覧・役割・呼び出し関係 |
 | `feature_to_function_mapping.md` | 機能ごとに、どの関数がどの順番で動くか |
 | `js_functions_diagram.mmd` / `js_diagram_source.dot` | 上記を1枚の図にまとめたソース(Mermaid記法 / Graphviz記法) |
