@@ -65,8 +65,7 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
    firebase deploy --only firestore:rules,hosting
    ```
 6. デプロイした URL の `/login.html` を手順2のパスワードでログイン → そのまま `/setup.html` を開き、
-   設定パスワード（設定画面用）・ケア項目・定休日を登録。
-   (ケア項目・定休日は次の手順で店舗ごとに上書きされます)
+   設定パスワード（設定画面用）を登録。(ケア項目・定休日は次の手順で店舗ごとに作成します)
 7. ログインしたまま `/seed-stores.html` を開いて「店舗を登録する」を実行。
    `stores/store_1`(本店・定休日 火木)と `stores/store_2`(豊中店・定休日 水木)が作成されます。
    ケア項目マスタは実行時点の `stores/main` と同じ内容がコピーされます(無ければ既定の4項目)。

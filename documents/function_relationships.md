@@ -86,7 +86,8 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 | `subscribeStoreConfig(storeId, callback)` | 同じ形をリアルタイム購読。設定画面の変更が即反映 | care.js / run.js / overview.js |
 | `getCareItemsMaster(storeId)` | ケア項目マスタを`order`順で取得 | history.js / seed-stores.js |
 | `updateCareItemsMaster` / `updateHolidays` / `updateBusyPeriods` | 店舗設定の各フィールドを上書き保存 | admin.js |
-| `initConfig` / `initStore` | 初期セットアップ用の初回作成 | setup.js |
+| `initConfig` | 初期セットアップ用、`config/common`の初回作成 | setup.js |
+| `initStore` | 店舗(`stores/{storeId}`)の初期作成(定休日・ケア項目マスタ) | seed-stores.js |
 
 **廃止した関数**:
 - `getDailyRecordsRange()` ― `dailyRecords`のフィールド化で不要
