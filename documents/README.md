@@ -20,27 +20,10 @@
 
 ## 2. Hostingに配置するファイル構成
 
-```
-index.html(login.html へリダイレクトするだけ)
-login.html / login.js(ログイン画面。パスワード入力→auth.jsを呼ぶ)
-main.html / main.js(担当選択画面。ケア/ラン/全体一覧/店長設定へのリンク+ログアウト)
-care.html / care.js(ケア担当画面)
-run.html / run.js(ラン担当画面)
-main.html の全体一覧(overviewView.js。日付×うさぎの表。main.js から埋め込み)
-register.html / register.js(うさぎ登録・編集画面+宿泊全体の予定編集)
-history.html / history.js(過去の記録参照画面)
-admin.html / admin.js(店長設定画面。ケア項目マスタ・定休日・繁忙期の編集)
-setup.html / setup.js(初期セットアップ。初回のみ)
-
-共通ファイル
-	firebase-config.js(Firebaseへの接続設定)
-	auth.js(共通ロジック層。パスワード照合+匿名ログイン+認証ガード requireAuth/logout)
-	schedule.js(共通ロジック層。日付計算＋ケア/ラン状態の判定 careOnDate/runOnDate)
-	scheduleGrid.js(共通ロジック層。登録画面STEP2グリッド ⇄ Firestore形式の変換)
-	dailyRecord.js(共通ロジック層。当日記録の生成・更新・予定への追随)
-	db.js(データアクセス層。Firestoreの読み書きをまとめる)
-	style.css(全画面共通のデザイン)
-```
+設計時点のおおまかな構成は「画面ごとにHTML/JS 1組＋共通ロジック層（`auth.js` / `schedule.js` /
+`scheduleGrid.js` / `dailyRecord.js`）＋データアクセス層（`db.js`）」という層分け。
+**実際の全ファイル一覧・各ファイルの役割は増えており、正確な最新版はリポジトリ直下の `README.md`
+「ファイル構成」を参照**（このドキュメント作成後に追加・削除されたファイルがあるため、ここでは重複させない）。
 
 > 関数の引数・`db.js` の関数一覧・同時編集の扱いは `function_relationships.md` にまとめている。
 > プロジェクト直下の `README.md` の「データ層と同時アクセス対策」も参照。
