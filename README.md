@@ -7,25 +7,71 @@
 `public/firebase-config.js` の `STORES` 配列に直接書く設計にしています(店舗を管理画面から増減する機能はありません。
 増やす場合は配列を編集し、Firestoreに `stores/{storeId}` を1件追加します)。
 
+## 機能
+
+スタッフはパスワードを1つ入力してログイン(共有アカウント)し、上部メニューから担当画面を選んで使う。
+
+- **全体一覧**（`main.html`）：今日から1週間ぶんを、日付×うさぎの表で一覧表示。ケア/ラン/写真をそれぞれ
+  予定〇・一部実施◐・完了●で色分け表示する。右上の「＋」からうさぎ登録へ、上部で店舗（本店／豊中店）を切替。
+- **ケア担当**（`care.html`）：うさぎごとにケア項目をチェック。当日だけ項目を追加/削除もできる（ケア項目マスタや
+  他の日の予定には影響しない）。全項目チェック済みになったら、カードを左スワイプして「ケア完了」を確定する。
+- **ラン担当**（`run.html`）：ラン回数のチェック、写真の撮影/送信管理に加えて、**ケア・ラン両方の「LINE送信済み」操作もここに集約**
+  されている（誤操作を防ぐため、送信済みにする操作だけスワイプ）。
+- **うさぎ登録**（`register.html`）：飼い主情報・宿泊期間・送迎の有無を入力後(STEP1)、ケア/ランの予定を滞在期間の
+  グリッドで確認・調整して保存する(STEP2)。ケア日は「お迎え日の前日」（定休日なら直近の営業日）を自動算出。
+  既存うさぎの編集や、宿泊終了(非表示化)もここから行う。
+- **過去の記録**（`history.html`）：宿泊が終わったうさぎだけを月ごとに、全体一覧と同じ表で閲覧する（編集不可）。
+- **設定**（`admin.html`）：ケア項目マスタ・定休日・繁忙期を編集(自動保存)。開くときに別途「設定パスワード」を要求する。
+
+**誰かの操作が他のスタッフの画面にも自動で反映される**のがこのアプリの核。たとえばケア担当がチェックを入れると、
+同じFirestoreの文書を購読しているラン担当・全体一覧の画面にも、ページの再読み込みなしで即座に反映される。
+
+## 仕組み（アーキテクチャ）
+
+```
+画面層 (login/main/care/run/register/admin/history)
+  ↓  Firestoreを直接は触らない
+共通ロジック層 (auth.js / schedule.js / scheduleGrid.js / dailyRecord.js)
+  ↓
+データアクセス層 (db.js)
+  ↓
+Firestore（リアルタイム購読 onSnapshot）
+```
+
+- **「予定」と「実績」を分けて持つ**：登録時に決めた`careSchedule`/`runSchedule`（予定）と、その日の
+  実施・送信済み状況を持つ`dailyRecords`（実績）は別フィールド。まだ来ていない未来の日は予定を、
+  今日・過去の日は実績を見て表示する。この判定は`schedule.js`の`careOnDate()`/`runOnDate()`に一本化されていて、
+  どの画面もこの2関数の結果だけを見る（表示ロジックの重複がない）。
+- **同時編集に強い書き込み**：複数のスタッフが同時に操作しても記録が壊れたり重複作成されたりしないよう、
+  操作の種類ごとに書き込み方を分けている。
+  - チェックなど実施記録の更新 → フィールド単位のマージ書き込み（`setDoc(..., {merge:true})`）
+  - その日だけの項目追加/削除 → `arrayUnion`/`arrayRemove`
+  - 登録画面での宿泊予定の保存 → `runTransaction`内で「利用者が変えた日だけ」を書く3-wayマージ
+    （他端末が別の日を変えていても上書きしない）
+- **Firestoreに依存しない部分はテスト可能な純粋関数として分離**：日付計算・状態判定・予定の変換ロジック
+  （`schedule.js` / `scheduleGrid.js` / `scheduleMerge.js` / `careReconcile.js`）はDOM/Firestoreを一切触らず、
+  `tests/`でNode標準のテストランナーによりテストしている（`npm test`、49件）。GitHub Actionsで
+  push・PRのたびに自動実行される（`.github/workflows/ci.yml`）。
+
+より詳しい関数一覧・呼び出し関係は `documents/function_relationships.md`、機能ごとの処理の流れは
+`documents/feature_to_function_mapping.md` を参照。
+
 ## ファイル構成
+
+機能ごとの動きは上の「機能」「仕組み」を参照。ここはファイルの場所と役割だけの索引。
 
 ```
 public/                 … Hosting で配信するファイル
-  index.html            … login.html へリダイレクト
-  login.html / login.js … ログイン(パスワード入力。内部はスタッフ共有アカウントでメール/パスワード認証)
-  main.html / main.js    … 全体一覧をメイン表示。左上「☰」でメニュー(ケア/ラン/過去の記録/設定)。
-                            一覧の右上「＋」でうさぎ登録へ。店舗切替つき
-  care.html / care.js    … ケア担当画面
-  run.html / run.js      … ラン担当画面
-  overviewView.js             … 全体一覧(日付×うさぎ)の描画本体。本日から1週間・コンパクト表示。
-                                種別列(ケア/ラン/写真)、宿泊期間/定休日をセル色で表示、予定〇/一部◐/完了●
-  register.html / register.js … うさぎ登録・編集(2段階・複数可)。
-                                STEP1=飼い主/日程/送迎(共通)+うさぎカード(名前/初回/ケア項目/備考。プチブラシは回数カウンター)
-                                STEP2=滞在期間グリッド。ケアは既定日に全部セット済み→「＋」で日を足し、内訳表で
-                                      通常項目はラジオで日を移動(元の日は自動で外れる)、プチブラシは日ごとに回数。ランはセルで増減
-  registerGridView.js         … register.js STEP2のグリッドHTML生成(scheduleTableHTML / careBreakdownHTML)
-  history.html / history.js   … 過去の記録参照(宿泊終了したうさぎだけを月ごとに全体一覧と同じグリッドで。閲覧専用)
-  admin.html / admin.js       … 設定(ケア項目・定休日・繁忙期。変更は自動保存。開くとき設定パスワードを要求。店舗名バッジを表示)
+  index.html                    … login.html へリダイレクトするだけ
+  login.html / login.js         … ログイン画面
+  main.html / main.js           … 全体一覧画面(overviewView.js を埋め込み)
+  care.html / care.js           … ケア担当画面
+  run.html / run.js             … ラン担当画面
+  overviewView.js               … 全体一覧・過去の記録で共用するグリッド描画部品
+  register.html / register.js   … うさぎ登録・編集画面
+  registerGridView.js           … register.js STEP2のグリッドHTML生成部品
+  history.html / history.js     … 過去の記録参照画面
+  admin.html / admin.js         … 設定画面
 
   firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集。gitignore対象。
                         firebase-config.example.js をコピーして作る)
@@ -46,9 +92,6 @@ firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
 package.json / eslint.config.js / .prettierrc.json … 開発ツール(npm run check)
 tests/ … 純粋ロジックのテスト(node --test)
 ```
-
-層の方針は設計資料どおり:画面層は Firestore を直接触らず、必ず `auth.js` / `dailyRecord.js` / `db.js` を経由します。
-Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各ファイルに直書きしない）。
 
 ## セットアップ手順
 
@@ -185,7 +228,6 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 ## データ層と同時アクセス対策
 
 - **店舗設定**：`getStoreConfig()`(1回)／`subscribeStoreConfig()`(購読)で `careItemsMaster` / `holidays` / `busyPeriods` をまとめて扱う。ケア/ラン/全体一覧は購読なので設定画面の変更が即反映。
-- **ケア/ラン状態の判定**：`schedule.js` の `careOnDate()` / `runOnDate()` に集約。全画面がこれだけを見る。
 - **当日記録の更新**：すべて `db.writeDailyRecord()`(`setDoc` merge)。`getOrCreateDailyRecord()` は「無いときだけ初期値を merge」なので同時に開いても重複作成されない。予定を後から足したぶんも取り込む。
 - **予定の書き込み**：
   - ケア担当「項目を編集」→ `db.patchScheduleDay()`（`arrayUnion`/`arrayRemove` で1項目単位）
