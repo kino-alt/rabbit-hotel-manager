@@ -2,6 +2,11 @@
 
 `documents/` の設計資料に基づく実装です。Firebase(Sparkプラン)+ Hosting + Firestore + メール/パスワード認証で動きます。
 
+実際に自分のアルバイト先(うさぎホテル2店舗)の日々の業務(ケア・ラン担当のチェック、飼い主へのLINE送信管理、宿泊予定の登録)を
+置き換えるために作った実務ツールです。汎用の多店舗SaaSではなく、店舗数(`store_1`/`store_2`)は
+`public/firebase-config.js` の `STORES` 配列に直接書く設計にしています(店舗を管理画面から増減する機能はありません。
+増やす場合は配列を編集し、Firestoreに `stores/{storeId}` を1件追加します)。
+
 ## ファイル構成
 
 ```
@@ -20,8 +25,6 @@ public/                 … Hosting で配信するファイル
                                       通常項目はラジオで日を移動(元の日は自動で外れる)、プチブラシは日ごとに回数。ランはセルで増減
   history.html / history.js   … 過去の記録参照(宿泊終了したうさぎだけを月ごとに全体一覧と同じグリッドで。閲覧専用)
   admin.html / admin.js       … 設定(ケア項目・定休日・繁忙期。変更は自動保存。開くとき設定パスワードを要求。店舗名バッジを表示)
-  setup.html / setup.js       … 初期セットアップ(初回のみ・パスワード等)
-  seed-stores.html / seed-stores.js … 店舗(store_1 本店 / store_2 豊中店)の初期登録(初回のみ)
 
   firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集。gitignore対象。
                         firebase-config.example.js をコピーして作る)
@@ -64,18 +67,15 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
    firebase login
    firebase deploy --only firestore:rules,hosting
    ```
-6. デプロイした URL の `/login.html` を手順2のパスワードでログイン → そのまま `/setup.html` を開き、
-   設定パスワード（設定画面用）を登録。(ケア項目・定休日は次の手順で店舗ごとに作成します)
-7. ログインしたまま `/seed-stores.html` を開いて「店舗を登録する」を実行。
-   `stores/store_1`(本店・定休日 火木)と `stores/store_2`(豊中店・定休日 水木)が作成されます。
-   ケア項目マスタは実行時点の `stores/main` と同じ内容がコピーされます(無ければ既定の4項目)。
-   同時に TTL 設定用の仮うさぎ(`expireAt` 付き)が各店舗へ1件ずつ入ります。
-8. **Firestore TTL** を設定:コンソール → Firestore →「TTL」→ コレクション `rabbits`、フィールド `expireAt` でポリシーを有効化。
-   (手順7の仮うさぎがあるのでフィールドを選択できます。ポリシー有効化後、仮うさぎは削除して構いません)
-   (宿泊終了[非表示]から6ヶ月後にうさぎ文書ごと自動削除されます。追加のプログラムは不要)
-   - `expireAt` は `Timestamp` 型で保存されます(`db.js` の `hideRabbit()`)。文字列だとTTLが機能しないため変更しないこと。
-   - TTLは期限到達後すぐには削除されず、**最大72時間程度のタイムラグ**があります(Firestoreの仕様。即座に消えなくても異常ではありません)。
-9. `/login.html` からログイン。`main.html`(担当選択)の上部で本店／豊中店を切り替えられます
+6. 初期データはアプリの画面からではなく、**Firestoreコンソールの「＋ドキュメントを追加」から手で作成**する(下記「Firestore データ構造」の形どおり)。
+   - `config/common`(ドキュメントID固定 `common`)に文字列フィールド `managerPassword` を1つ作成。設定画面(`admin.html`)を開くときのパスワードになる。
+   - `stores/{storeId}`(`storeId` は `public/firebase-config.js` の `STORES` に書いた値。既定は `store_1` / `store_2`)を店舗の数だけ作成し、`name` / `holidays` / `careItemsMaster` / `busyPeriods` を入力する。
+     店舗を増減するときは `STORES` 配列を編集し、この手順で `stores/{storeId}` を作り直す(このアプリは特定の職場の店舗数を前提にした作りで、管理画面から店舗を増減する機能は無い)。
+7. **Firestore TTL** を設定:コンソール → Firestore →「TTL」→ コレクショングループID `rabbits`、フィールド `expireAt` でポリシーを有効化。
+   既存データが無くても設定できる(宿泊終了[非表示]から6ヶ月後にうさぎ文書ごと自動削除される。追加のプログラムは不要)。
+   - `expireAt` は `Timestamp` 型で保存される(`db.js` の `hideRabbit()`)。文字列だとTTLが機能しないため変更しないこと。
+   - TTLは期限到達後すぐには削除されず、**最大72時間程度のタイムラグ**がある(Firestoreの仕様。即座に消えなくても異常ではない)。
+8. `/login.html` からログイン。`main.html`(担当選択)の上部で本店／豊中店を切り替えられます
    (選択は端末ごとに `localStorage` に保存され、切替時にページが再読み込みされて全画面へ反映されます)。
 
 以降の変更方法:
@@ -178,7 +178,6 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 | LINE送信・項目削除の操作 | スワイプ | ボタン(＋タッチ環境向けにスワイプは今後追加可) | まず確実に動く操作で機能を満たすことを優先。呼ぶ関数(`markCareLineSent` 等)は資料どおり |
 | `getOrCreateDailyRecord` の引数 | `(rabbitId, date)` | `(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | 購読中の文書と店舗設定を渡して読み取り回数を減らすため |
 | `overview` での記録生成 | 資料では一覧でも `getOrCreateDailyRecord` | 一覧では**生成せず参照のみ** | 未来日の記録を先に作らないため。生成はケア/ラン画面で当日ぶんのみ |
-| セットアップ | (コンソール前提) | `setup.html` を追加 | コンソールを触らずに初期値を投入できるように |
 | `careTotals` / `runTotal` | 宿泊全体の累計を文書に持つ | **廃止**（2026-09） | どの画面も読んでおらず、チェック操作ごとに余計な書き込みが増える＋当日記録と非アトミックにズレる原因になっていた。累計が要るときは `dailyRecords` から集計する |
 
 ## データ層と同時アクセス対策

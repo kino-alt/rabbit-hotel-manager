@@ -39,13 +39,6 @@ classDiagram
       起動時 ― getStoreConfig()+getAllRabbits()
       render() ― 月ごとに宿泊終了(isStayEnded)ぶんを絞りscheduleGridHTML()で表示(閲覧専用)
     }
-    class setupJs["setup.js(画面層・初回のみ)"] {
-      onSubmit() ― 設定パスワード・ケア項目・定休日の初期値をinitConfig()/initStore()で投入
-    }
-    class seedStoresJs["seed-stores.js(画面層・初回のみ)"] {
-      onSeed() ― store_1/store_2の初期登録とTTL用の仮うさぎ作成
-    }
-
     %% ===== 画面部品(複数画面/専用画面で共用) =====
     class overviewViewJs["overviewView.js(画面部品)"] {
       initOverview() ― main.htmlの全体一覧(本日から7日)を描画・購読
@@ -63,7 +56,6 @@ classDiagram
       verifyManagerPassword(pw) ― config/common.managerPasswordと照合
       changeStaffPassword(cur,next) ― 再認証してupdatePassword
       requireAuth(onReady) ― 各画面の認証ガード(未ログインならlogin.htmlへ)
-      requireLogin(onReady,onMissing) ― setup/seed-stores用
       logout() ― signOutしてlogin.htmlへ
     }
     class scheduleJs["schedule.js(共通ロジック層・純粋)"] {
@@ -107,7 +99,7 @@ classDiagram
 
     %% ===== データアクセス層 =====
     class dbJs["db.js(データアクセス層)"] {
-      getConfig()/initConfig() ― config/commonの取得・初期作成
+      getConfig() ― config/commonの取得
       saveRabbit()/subscribeRabbit() ― うさぎ文書の保存・単体購読
       subscribeActiveRabbits()/subscribeAllRabbits()/getAllRabbits() ― うさぎ一覧の購読・取得
       writeDailyRecord()/patchRabbit() ― dailyRecordsのマージ書き込み・field path更新
@@ -116,7 +108,6 @@ classDiagram
       hideRabbit()/unhideRabbit() ― 宿泊終了(hiddenAt/expireAt)の設定・解除
       getStoreConfig()/subscribeStoreConfig() ― 店舗設定を1回の読み取り/購読でまとめて取得
       getCareItemsMaster()/updateCareItemsMaster()/updateHolidays()/updateBusyPeriods() ― 店舗設定の個別更新
-      initStore() ― 初期セットアップ用
     }
 
     %% ===== 依存関係 =====
@@ -158,10 +149,6 @@ classDiagram
     historyJs --> dbJs
     historyJs --> scheduleJs
     historyJs --> overviewViewJs
-    setupJs --> authJs
-    setupJs --> dbJs
-    seedStoresJs --> authJs
-    seedStoresJs --> dbJs
     overviewViewJs --> dbJs
     overviewViewJs --> scheduleJs
     overviewViewJs --> escJs

@@ -33,7 +33,7 @@ service cloud.firestore {
 
     // 設定パスワード（managerPassword）だけを置く文書。
     // get：設定画面のパスワード照合に必要（ログイン済みスタッフのみ）
-    // 作成：まだ存在しない場合のみ（setup.html の初回実行）。フィールドは managerPassword のみ。
+    // 作成：まだ存在しない場合のみ（初回セットアップ時、Firestoreコンソールから作成）。フィールドは managerPassword のみ。
     // 更新・削除：クライアントからは不可（変更は Firebase コンソールで）
     match /config/{doc} {
       allow get: if staff();

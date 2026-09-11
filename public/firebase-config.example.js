@@ -41,7 +41,7 @@ export const STAFF_EMAIL = "staff@example.com";
 const RECAPTCHA_SITE_KEY = "";
 
 // 店舗一覧（Firestore の stores/{id} と対応）。
-// 店舗を増やすときはこの配列に追加し、seed-stores.html で初期値を書き込む。
+// 店舗を増やすときはこの配列に追加し、Firestoreコンソールで stores/{storeId} を作成する(README参照)。
 export const STORES = [
   { id: "store_1", name: "本店" },
   { id: "store_2", name: "豊中店" },

@@ -234,47 +234,4 @@ export async function updateBusyPeriods(storeId, busyPeriods) {
   await setDoc(storeRef(storeId), { busyPeriods }, { merge: true });
 }
 
-// ---- 初期セットアップ用 ----
-
-// 設定パスワード（設定画面の入口）だけを保存する。
-// スタッフのログインは Firebase Authentication の共有アカウントで行うため、
-// 共通パスワードは Firestore には置かない。
-export async function initConfig(managerPassword) {
-  await setDoc(doc(firestore, "config", "common"), { managerPassword });
-}
-
-export async function initStore(storeId, { name, holidays, careItemsMaster }) {
-  const patch = {};
-  if (name !== undefined) patch.name = name;
-  if (holidays !== undefined) patch.holidays = holidays;
-  if (careItemsMaster !== undefined) patch.careItemsMaster = careItemsMaster;
-  await setDoc(storeRef(storeId), patch, { merge: true });
-}
-
-// TTLポリシー設定用のダミーうさぎを1件作る。
-// Firestore の TTL 設定はフィールド（expireAt）が存在する文書がないと有効化できないため、
-// Timestamp 型の expireAt を持つ仮データを入れておく。hiddenAt を入れておくので
-// 稼働中の一覧（subscribeActiveRabbits / getAllRabbits）には出てこない。
-export async function createPlaceholderRabbit(storeId) {
-  const ref = await addDoc(rabbitsCol(storeId), {
-    ownerLastName: "（TTL用ダミー）",
-    rabbitName: "placeholder",
-    groupId: null,
-    checkInDate: "2000-01-01",
-    checkOutDate: "2000-01-02",
-    transportDropoff: false,
-    transportPickup: false,
-    isFirstTime: false,
-    note: "TTLポリシー設定のための仮データ。ポリシー有効化後は削除して問題ありません。",
-    careSchedule: {},
-    runSchedule: {},
-    dailyRecords: {},
-    createdAt: serverTimestamp(),
-    hiddenAt: serverTimestamp(),
-    expireAt: Timestamp.fromMillis(Date.now() + SIX_MONTHS_MS),
-    _placeholder: true,
-  });
-  return ref.id;
-}
-
 export { STORE_ID };

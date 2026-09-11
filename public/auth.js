@@ -75,15 +75,6 @@ export function requireAuth(onReady) {
   });
 }
 
-// setup.html / seed-stores.html 用：ログイン済みなら onReady、未ログインなら message を表示。
-// （初回セットアップは、先に login.html でログインしてから開く）
-export function requireLogin(onReady, onMissing) {
-  onAuthStateChanged(auth, (user) => {
-    if (user && !user.isAnonymous) onReady(user);
-    else onMissing();
-  });
-}
-
 export async function logout() {
   localStorage.removeItem("role");
   await signOut(auth);

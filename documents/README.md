@@ -8,6 +8,8 @@
 > - 認証 … メール/パスワード（匿名認証は廃止）
 > - `config/common` … `managerPassword` のみ（`commonPassword` は廃止）
 > - テスト・純粋モジュール（`schedule.js` / `scheduleGrid.js` / `scheduleMerge.js` / `careReconcile.js`） … `tests/`
+> - `setup.html` / `seed-stores.html` … **削除済み**。初期データ（`config/common` / `stores/{storeId}`）は
+>   Firestoreコンソールから手動で作成する（詳細はリポジトリ直下の `README.md`「セットアップ手順」）
 
 ## 1. システム構成
 

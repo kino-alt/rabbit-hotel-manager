@@ -169,4 +169,4 @@
 | 店長設定(設定パスワードで保護) | admin.js → db.js(直結) |
 | 過去記録参照 | history.js → db.js(getAllRabbits) → hiddenAtありだけをoverviewView.scheduleGridHTMLで月ごとに表示(閲覧専用) |
 | 自動削除 | db.js(hideRabbitの書き込みのみ)+ Firestore TTL(削除は自動) |
-| 初期セットアップ | (先にlogin.htmlでログイン) → setup.js → auth.js(requireLogin) → db.js(initConfig)。店舗(定休日・ケア項目)はseed-stores.js → db.js(initStore) |
+| 初期セットアップ(`config/common` / `stores/{storeId}`の作成) | アプリの画面は無し。Firestoreコンソールから手動で作成(README参照) |

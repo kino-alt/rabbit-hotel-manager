@@ -74,20 +74,6 @@ digraph G {
     </TABLE>
   >];
 
-  setupJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>setup.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層(初回のみ)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSubmit()</FONT><BR/><FONT POINT-SIZE="9">設定パスワード・ケア項目・定休日をinitConfig()/initStore()で投入</FONT></TD></TR>
-    </TABLE>
-  >];
-
-  seedStoresJs [label=<
-    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
-      <TR><TD BGCOLOR="#F5C4B3"><FONT POINT-SIZE="13"><B>seed-stores.js</B></FONT><BR/><FONT POINT-SIZE="10">画面層(初回のみ)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">onSeed()</FONT><BR/><FONT POINT-SIZE="9">store_1/store_2の初期登録とTTL用の仮うさぎ作成</FONT></TD></TR>
-    </TABLE>
-  >];
-
   overviewViewJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#FADCC9"><FONT POINT-SIZE="13"><B>overviewView.js</B></FONT><BR/><FONT POINT-SIZE="10">画面部品(main/care/run/historyで共用)</FONT></TD></TR>
@@ -112,7 +98,6 @@ digraph G {
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">verifyManagerPassword(pw)</FONT><BR/><FONT POINT-SIZE="9">config/common.managerPasswordと照合</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">changeStaffPassword(cur,next)</FONT><BR/><FONT POINT-SIZE="9">再認証してupdatePassword</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireAuth(onReady)</FONT><BR/><FONT POINT-SIZE="9">各画面の認証ガード(未ログインならlogin.htmlへ)</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">requireLogin(onReady,onMissing)</FONT><BR/><FONT POINT-SIZE="9">setup/seed-stores用</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">logout()</FONT><BR/><FONT POINT-SIZE="9">signOutしてlogin.htmlへ</FONT></TD></TR>
     </TABLE>
   >];
@@ -198,7 +183,7 @@ digraph G {
   dbJs [label=<
     <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#B4B2A9">
       <TR><TD BGCOLOR="#9FE1CB"><FONT POINT-SIZE="13"><B>db.js</B></FONT><BR/><FONT POINT-SIZE="10">データアクセス層</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getConfig() / initConfig()</FONT><BR/><FONT POINT-SIZE="9">config/commonの取得・初期作成</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getConfig()</FONT><BR/><FONT POINT-SIZE="9">config/commonの取得</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">saveRabbit() / subscribeRabbit()</FONT><BR/><FONT POINT-SIZE="9">うさぎ文書の保存・単体購読</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">subscribeActiveRabbits() / subscribeAllRabbits() / getAllRabbits()</FONT><BR/><FONT POINT-SIZE="9">うさぎ一覧の購読・取得</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">writeDailyRecord() / patchRabbit()</FONT><BR/><FONT POINT-SIZE="9">dailyRecordsのマージ書き込み・field path更新</FONT></TD></TR>
@@ -207,7 +192,6 @@ digraph G {
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">hideRabbit() / unhideRabbit()</FONT><BR/><FONT POINT-SIZE="9">宿泊終了(hiddenAt/expireAt)の設定・解除</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getStoreConfig() / subscribeStoreConfig()</FONT><BR/><FONT POINT-SIZE="9">店舗設定を1回の読み取り/購読でまとめて取得</FONT></TD></TR>
       <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">getCareItemsMaster() / updateCareItemsMaster() / updateHolidays() / updateBusyPeriods()</FONT><BR/><FONT POINT-SIZE="9">店舗設定の個別更新</FONT></TD></TR>
-      <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="11">initStore()</FONT><BR/><FONT POINT-SIZE="9">初期セットアップ用</FONT></TD></TR>
     </TABLE>
   >];
 
@@ -249,10 +233,6 @@ digraph G {
   historyJs -> dbJs;
   historyJs -> scheduleJs;
   historyJs -> overviewViewJs;
-  setupJs -> authJs;
-  setupJs -> dbJs;
-  seedStoresJs -> authJs;
-  seedStoresJs -> dbJs;
   overviewViewJs -> dbJs;
   overviewViewJs -> scheduleJs;
   overviewViewJs -> escJs;

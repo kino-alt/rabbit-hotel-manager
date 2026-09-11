@@ -6,7 +6,7 @@
 
 | 層 | ファイル | 役割 |
 |---|---|---|
-| 画面層 | login.js / main.js / care.js / run.js / register.js / overviewView.js / admin.js / history.js / setup.js | 画面の表示・ボタンやチェックボックスの操作を受け取る |
+| 画面層 | login.js / main.js / care.js / run.js / register.js / overviewView.js / admin.js / history.js | 画面の表示・ボタンやチェックボックスの操作を受け取る |
 | 共通ロジック層 | schedule.js / scheduleGrid.js / dailyRecord.js / auth.js | 日付計算・ケア/ラン状態の判定・当日記録の作成・登録STEP2の変換・認証 |
 | データアクセス層 | db.js | Firestoreへの実際の読み書きをまとめる薄い層 |
 | データ本体 | Firestore | 実データ(前回まとめたデータ構造) |
@@ -23,7 +23,6 @@
 | `verifyManagerPassword(pw)` | `db.getConfig()` で `config/common.managerPassword` を読み、設定画面を開くときの2段階目を照合 | admin.js |
 | `changeStaffPassword(cur, next)` | 今のパスワードで再認証してから `updatePassword`。設定画面の「ログインパスワード」欄 | admin.js |
 | `requireAuth(onReady)` | 各画面の先頭で呼ぶ。`onAuthStateChanged` で未ログイン（または匿名）を検知したら `login.html` へ飛ばし、ログイン済みなら `onReady(user)` を実行 | login.js以外の全画面 |
-| `requireLogin(onReady, onMissing)` | setup / seed-stores 用。ログイン済みなら `onReady`、未ログインなら `onMissing`（先に login.html でログインする案内） | setup.js / seed-stores.js |
 | `logout()` | `signOut` して `login.html` へ戻す | main.js |
 
 ## schedule.js(共通ロジック層)
@@ -69,7 +68,7 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 
 | 関数名 | 役割 | 呼び出し元 |
 |---|---|---|
-| `getConfig()` | `config/common`(共通・店長パスワード)を取得 | auth.js / setup.js |
+| `getConfig()` | `config/common`(共通・店長パスワード)を取得 | auth.js |
 | `saveRabbit(storeId, data)` | うさぎの新規登録・編集を保存(`data.id`があれば更新、なければ新規) | register.js |
 | `getRabbit(storeId, rabbitId)` | うさぎ文書1件を一度だけ取得 | (現在未使用・プリミティブとして残置) |
 | `subscribeRabbit(storeId, rabbitId, callback)` | うさぎ文書1件をリアルタイム購読(`onSnapshot`)。1購読で予定・実績の両方が取れる | register.js(編集画面) |
@@ -84,10 +83,8 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 | `hideRabbit` / `unhideRabbit` | `hiddenAt` / `expireAt`(Firestore TTL起点)の設定・解除 | register.js / (復旧用) |
 | `getStoreConfig(storeId)` | 店舗設定を**1回の読み取り**で `{ careItemsMaster, holidays, busyPeriods }` にして返す | register.js / admin.js |
 | `subscribeStoreConfig(storeId, callback)` | 同じ形をリアルタイム購読。設定画面の変更が即反映 | care.js / run.js / overview.js |
-| `getCareItemsMaster(storeId)` | ケア項目マスタを`order`順で取得 | history.js / seed-stores.js |
+| `getCareItemsMaster(storeId)` | ケア項目マスタを`order`順で取得 | history.js |
 | `updateCareItemsMaster` / `updateHolidays` / `updateBusyPeriods` | 店舗設定の各フィールドを上書き保存 | admin.js |
-| `initConfig` | 初期セットアップ用、`config/common`の初回作成 | setup.js |
-| `initStore` | 店舗(`stores/{storeId}`)の初期作成(定休日・ケア項目マスタ) | seed-stores.js |
 
 **廃止した関数**:
 - `getDailyRecordsRange()` ― `dailyRecords`のフィールド化で不要
