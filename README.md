@@ -39,15 +39,35 @@
 
 ## 仕組み（アーキテクチャ）
 
+大きくは4段の一方向の流れです。画面層は基本的に共通ロジック層を経由しますが、複雑な計算が要らない単純な
+読み書き（一覧の購読など）は画面層からデータアクセス層(`db.js`)を直接呼ぶこともあります。
+
+```mermaid
+flowchart TB
+    Screens["画面層<br/>login / main / care / run / register / admin / history"]
+    Logic["共通ロジック層<br/>auth.js・schedule.js・scheduleGrid.js・dailyRecord.js"]
+    DB["データアクセス層<br/>db.js"]
+    FS[("Firestore")]
+
+    Screens --> Logic
+    Screens -. 単純な読み書きは直接 .-> DB
+    Logic --> DB
+    DB <-->|リアルタイム購読 onSnapshot| FS
+
+    classDef screen fill:#F5C4B3,stroke:#B4B2A9,color:#222
+    classDef logic fill:#CECBF6,stroke:#B4B2A9,color:#222
+    classDef data fill:#9FE1CB,stroke:#B4B2A9,color:#222
+    class Screens screen
+    class Logic logic
+    class DB data
 ```
-画面層 (login/main/care/run/register/admin/history)
-  ↓  Firestoreを直接は触らない
-共通ロジック層 (auth.js / schedule.js / scheduleGrid.js / dailyRecord.js)
-  ↓
-データアクセス層 (db.js)
-  ↓
-Firestore（リアルタイム購読 onSnapshot）
-```
+
+ファイル単位でもっと細かく見ると、実際には「画面部品」（`overviewView.js`など複数画面が共用する描画部品）や
+「小さな共通部品」（`esc.js`/`swipe.js`など、業務知識を持たない汎用ユーティリティ）も存在します。
+その全ファイルの依存関係は次の図のとおりです（色は上の3層に対応。実線＝業務ロジックの本流、
+点線＝汎用ユーティリティへの呼び出し）。
+
+![JSファイルの依存関係図](documents/js_functions_diagram.png)
 
 - **「予定」と「実績」を分けて持つ**：登録時に決めた`careSchedule`/`runSchedule`（予定）と、その日の
   実施・送信済み状況を持つ`dailyRecords`（実績）は別フィールド。まだ来ていない未来の日は予定を、
