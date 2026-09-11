@@ -1,116 +1,52 @@
-%% 詳細な関数一覧・呼び出し関係は function_relationships.md が正。
+%% 階層(画面層→画面部品/小さな共通部品→共通ロジック層→純粋モジュール→データアクセス層)を
+%% subgraphで明示したレイアウト。詳細な関数一覧・呼び出し関係は function_relationships.md が正。
 %% 再生成: npx @mermaid-js/mermaid-cli -i js_functions_diagram.mmd -o js_functions_diagram.png -b white
-classDiagram
-    %% ===== 画面層 =====
-    class loginJs["login.js(画面層)"] {
-      onLoginSubmit() ― パスワード送信を受け取りauth.login()を呼ぶ
-    }
-    class mainJs["main.js(画面層)"] {
-      担当選択画面 ― ケア/ラン/過去の記録/設定へのリンク・ログアウト
-      店舗切替 ― setStoreId()してページ再読み込み
-      全体一覧 ― overviewView.initOverview()を埋め込み表示
-    }
-    class careJs["care.js(画面層)"] {
-      onCheckboxClick() ― ケア項目のチェックを受け取る
-      onAddItemForToday()/onDeleteItemForToday() ― 「項目を編集」の追加/削除
-      onLineSentClick() ― LINE送信ボタン
-      ensureRecords() ― 表示中の日の当日記録を用意する
-      render() ― 一覧を表示し購読を開始する
-    }
-    class runJs["run.js(画面層)"] {
-      onRunCheckToggle() ― ラン実施回数の増減を受け取る
-      onRunSent() ― ラン送信ボタン
-      onPhotoCheck() ― 写真の撮影済み/送信済みチェック
-      ensureRecords() ― 表示中の日の当日記録を用意する
-      render() ― 一覧を表示し購読を開始する
-    }
-    class registerJs["register.js(画面層)"] {
-      起動時 ― getStoreConfig()→subscribeRabbit()(編集時)
-      rebuildGridEntries() ― STEP2グリッドを組み立てる(scheduleGrid.buildEntry)
-      onSave() ― entryToSchedules()→saveRabbit()/writeSchedulesMerge()
-      onHideRabbit() ― 宿泊終了(非表示)にする
-    }
-    class adminJs["admin.js(画面層)"] {
-      店舗設定編集 ― ケア項目マスタ/定休日/繁忙期(変更は自動保存)
-      設定パスワード確認 ― verifyManagerPassword()
-      ログインパスワード変更 ― changeStaffPassword()
-    }
-    class historyJs["history.js(画面層)"] {
-      起動時 ― getStoreConfig()+getAllRabbits()
-      render() ― 月ごとに宿泊終了(isStayEnded)ぶんを絞りscheduleGridHTML()で表示(閲覧専用)
-    }
-    %% ===== 画面部品(複数画面/専用画面で共用) =====
-    class overviewViewJs["overviewView.js(画面部品)"] {
-      initOverview() ― main.htmlの全体一覧(本日から7日)を描画・購読
-      rabbitScheduleTableHTML() ― ケア/ラン担当画面のうさぎ別テーブル
-      scheduleGridHTML(rabbits,dates,ctx,opts) ― 日付×うさぎのグリッド本体。全体一覧とhistory.jsで共用
-    }
-    class registerGridViewJs["registerGridView.js(画面部品・register専用)"] {
-      scheduleTableHTML() ― STEP2の滞在期間グリッドHTML生成
-      careBreakdownHTML() ― ケア項目の内訳表HTML生成
-    }
+%% 実線=業務ロジックの本流の依存／点線=esc.js等の汎用ユーティリティ呼び出し(横断的・補助的)
+flowchart TB
+    subgraph L1["画面層"]
+        direction LR
+        loginJs["login.js<br/>ログイン画面"]
+        mainJs["main.js<br/>全体一覧・メニュー・店舗切替"]
+        careJs["care.js<br/>ケア担当画面"]
+        runJs["run.js<br/>ラン担当画面・LINE送信"]
+        registerJs["register.js<br/>うさぎ登録・編集"]
+        adminJs["admin.js<br/>設定画面"]
+        historyJs["history.js<br/>過去の記録(閲覧専用)"]
+    end
 
-    %% ===== 共通ロジック層 =====
-    class authJs["auth.js(共通ロジック層)"] {
-      login(pw) ― signInWithEmailAndPassword(STAFF_EMAIL,pw)
-      verifyManagerPassword(pw) ― config/common.managerPasswordと照合
-      changeStaffPassword(cur,next) ― 再認証してupdatePassword
-      requireAuth(onReady) ― 各画面の認証ガード(未ログインならlogin.htmlへ)
-      logout() ― signOutしてlogin.htmlへ
-    }
-    class scheduleJs["schedule.js(共通ロジック層・純粋)"] {
-      careOnDate(rabbit,date,countableIds) ― その日のケア状態を予定+当日記録から統合(画面はこれだけを見る)
-      runOnDate(rabbit,date) ― その日のラン状態
-      calculatePhotoNeeded() ― 写真要否の自動判定
-      calculateDefaultCareDate() ― お迎え日から逆算しケア日を決める
-      isStayEnded(rabbit) ― 宿泊終了か(hiddenAtあり or お迎え日超過)
-      isBusyPeriod()/countableIdSet() ― 繁忙期判定/回数式項目ID集合
-      日付ユーティリティ ― toISO/parseISO/addDays/eachDate/formatJP/isHoliday ほか
-    }
-    class scheduleGridJs["scheduleGrid.js(共通ロジック層・純粋・register STEP2専用)"] {
-      buildEntry(shared,card,prev,ctx) ― STEP1入力+直前の作業からentryを組み立てる
-      entryToSchedules(entry) ― entry→careSchedule/careCounts/runSchedule
-      careScheduleShape()/careUnitsOnDay() ほか ― グリッド集計ヘルパー
-    }
-    class dailyRecordJs["dailyRecord.js(共通ロジック層)"] {
-      getOrCreateDailyRecord() ― 当日の記録が無ければ予定からコピーして新規作成
-      reconcileDailyRecord() ― 既存の当日記録を予定へ合わせる(register保存直後)
-      updateCareItem()/setCareCount() ― ケア項目の実施(チェック/回数)を更新
-      addCareToday()/removeCareToday()/setCareNeedToday() ― 「項目を編集」(予定+当日記録の両方)
-      setCareDone()/markCareLineSent()/unmarkCareLineSent() ― ケア完了・LINE送信
-      updateRunCheck()/markRunLineSent()/unmarkRunLineSent() ― ラン実施・LINE送信
-      updatePhotoStatus() ― 写真needed/taken/sentの更新
-    }
+    subgraph L2["画面部品(複数/専用画面で共用)"]
+        direction LR
+        overviewViewJs["overviewView.js<br/>グリッド描画(共用部品)"]
+        registerGridViewJs["registerGridView.js<br/>STEP2グリッド(register専用)"]
+    end
 
-    %% ===== 純粋モジュール(DOM非依存・tests/対象) =====
-    class scheduleMergeJs["scheduleMerge.js(純粋・テスト対象)"] {
-      computeSchedulePatch(base,server,next) ― 予定の3-wayマージ判定(register保存用)
-    }
-    class careReconcileJs["careReconcile.js(純粋・テスト対象)"] {
-      reconcileCare() ― 当日記録のcareを予定へ合わせる
-      computeAllDone() ― 全項目完了かを判定
-    }
+    subgraph L3["小さな共通部品(ドメイン知識なし)"]
+        direction LR
+        escJs["esc.js<br/>HTMLエスケープ"]
+        swipeJs["swipe.js<br/>スワイプ判定"]
+        toastJs["toast.js<br/>失敗トースト"]
+        iconsJs["icons.js<br/>SVGアイコン"]
+    end
 
-    %% ===== 小さな共通部品 =====
-    class escJs["esc.js"] { esc() ― HTMLエスケープ }
-    class swipeJs["swipe.js"] { enableSwipeComplete() ― スワイプ完了操作 }
-    class toastJs["toast.js"] { notifyWriteError() ― 書き込み失敗トースト }
-    class iconsJs["icons.js"] { icon() ― SVGアイコン生成ヘルパー }
+    subgraph L4["共通ロジック層"]
+        direction LR
+        authJs["auth.js<br/>認証・設定パスワード照合"]
+        scheduleJs["schedule.js<br/>日付計算・状態判定(純粋)"]
+        scheduleGridJs["scheduleGrid.js<br/>予定⇄グリッド変換(純粋)"]
+        dailyRecordJs["dailyRecord.js<br/>当日記録の生成・更新"]
+    end
 
-    %% ===== データアクセス層 =====
-    class dbJs["db.js(データアクセス層)"] {
-      getConfig() ― config/commonの取得
-      saveRabbit()/subscribeRabbit() ― うさぎ文書の保存・単体購読
-      subscribeActiveRabbits()/subscribeAllRabbits()/getAllRabbits() ― うさぎ一覧の購読・取得
-      writeDailyRecord()/patchRabbit() ― dailyRecordsのマージ書き込み・field path更新
-      patchScheduleDay() ― 予定を1項目/1日単位で更新(arrayUnion/arrayRemove)
-      writeSchedulesMerge() ― register保存用runTransaction(3-wayマージ)
-      hideRabbit()/unhideRabbit() ― 宿泊終了(hiddenAt/expireAt)の設定・解除
-      getStoreConfig()/subscribeStoreConfig() ― 店舗設定を1回の読み取り/購読でまとめて取得
-      getCareItemsMaster()/updateCareItemsMaster()/updateHolidays()/updateBusyPeriods() ― 店舗設定の個別更新
-    }
+    subgraph L5["純粋モジュール(テスト対象)"]
+        direction LR
+        scheduleMergeJs["scheduleMerge.js<br/>予定の3-wayマージ(純粋)"]
+        careReconcileJs["careReconcile.js<br/>記録を予定へ整合(純粋)"]
+    end
 
-    %% ===== 依存関係 =====
+    subgraph L6["データアクセス層"]
+        dbJs["db.js<br/>Firestoreの読み書き"]
+    end
+
+    %% ===== 業務ロジックの本流(実線) =====
     loginJs --> authJs
     mainJs --> authJs
     mainJs --> overviewViewJs
@@ -119,42 +55,58 @@ classDiagram
     careJs --> dailyRecordJs
     careJs --> scheduleJs
     careJs --> overviewViewJs
-    careJs --> toastJs
-    careJs --> swipeJs
-    careJs --> escJs
-    careJs --> iconsJs
     runJs --> authJs
     runJs --> dbJs
     runJs --> dailyRecordJs
     runJs --> scheduleJs
     runJs --> overviewViewJs
-    runJs --> toastJs
-    runJs --> swipeJs
-    runJs --> escJs
-    runJs --> iconsJs
     registerJs --> authJs
     registerJs --> dbJs
     registerJs --> dailyRecordJs
     registerJs --> scheduleJs
     registerJs --> scheduleGridJs
     registerJs --> registerGridViewJs
-    registerGridViewJs --> escJs
     registerGridViewJs --> scheduleJs
     registerGridViewJs --> scheduleGridJs
     adminJs --> authJs
     adminJs --> dbJs
     adminJs --> scheduleJs
-    adminJs --> iconsJs
     historyJs --> authJs
     historyJs --> dbJs
     historyJs --> scheduleJs
     historyJs --> overviewViewJs
     overviewViewJs --> dbJs
     overviewViewJs --> scheduleJs
-    overviewViewJs --> escJs
     authJs --> dbJs
     dbJs --> scheduleMergeJs
     dailyRecordJs --> dbJs
     dailyRecordJs --> scheduleJs
     dailyRecordJs --> careReconcileJs
     scheduleGridJs --> scheduleJs
+
+    %% ===== 汎用ユーティリティ呼び出し(点線・補助的) =====
+    careJs -.-> toastJs
+    careJs -.-> swipeJs
+    careJs -.-> escJs
+    careJs -.-> iconsJs
+    runJs -.-> toastJs
+    runJs -.-> swipeJs
+    runJs -.-> escJs
+    runJs -.-> iconsJs
+    registerGridViewJs -.-> escJs
+    adminJs -.-> iconsJs
+    overviewViewJs -.-> escJs
+
+    classDef screen fill:#F5C4B3,stroke:#B4B2A9,color:#222
+    classDef viewpart fill:#FADCC9,stroke:#B4B2A9,color:#222
+    classDef util fill:#E4E4E0,stroke:#B4B2A9,color:#222
+    classDef logic fill:#CECBF6,stroke:#B4B2A9,color:#222
+    classDef pure fill:#FFF3B0,stroke:#B4B2A9,color:#222
+    classDef data fill:#9FE1CB,stroke:#B4B2A9,color:#222
+
+    class loginJs,mainJs,careJs,runJs,registerJs,adminJs,historyJs screen
+    class overviewViewJs,registerGridViewJs viewpart
+    class escJs,swipeJs,toastJs,iconsJs util
+    class authJs,scheduleJs,scheduleGridJs,dailyRecordJs logic
+    class scheduleMergeJs,careReconcileJs pure
+    class dbJs data
