@@ -10,4 +10,3 @@
 | `feature_to_function_mapping.md` | 機能ごとに、どの関数がどの順番で動くか |
 | `js_functions_diagram.mmd` / `js_diagram_source.dot` | 上記を1枚の図にまとめたソース(Mermaid記法 / Graphviz記法) |
 | `js_functions_diagram.png` | `js_functions_diagram.mmd` から書き出した画像。更新時は `npx @mermaid-js/mermaid-cli -i js_functions_diagram.mmd -o js_functions_diagram.png -b white` で再生成 |
-| `care_screen_wireframe.svg` / `run_screen_wireframe.svg` | 画面レイアウトの参考(初期の下書き。操作方式は一部実装と異なる) |
