@@ -54,7 +54,7 @@ setup.html / setup.js(初期セットアップ。初回のみ)
 | `feature_to_function_mapping.md` | 機能ごとに、どの関数がどの順番で動くか |
 | `js_functions_diagram.mmd` / `js_diagram_source.dot` | 上記を1枚の図にまとめたソース(Mermaid記法 / Graphviz記法)。関数の詳細・引数は `function_relationships.md` を正とする |
 | `js_functions_diagram.png` | `js_functions_diagram.mmd` から書き出した画像。更新時は `npx @mermaid-js/mermaid-cli -i js_functions_diagram.mmd -o js_functions_diagram.png -b white` で再生成 |
-| `care_screen_wireframe.svg` / `run_screen_wireframe.svg` | 画面レイアウトの参考。**操作方式は実装と相違あり**:図中の「横にスワイプ」「←」は、実装では「項目を編集」トグル＋「削除」ボタン／「LINE送信」ボタンに置き換えている(まず確実に動く操作を優先。呼ぶ関数は資料どおり) |
+| `care_screen_wireframe.svg` / `run_screen_wireframe.svg` | 画面レイアウトの参考。**操作方式は実装と一部相違あり**:項目の追加/削除は「項目を編集」トグル＋ボタンに置き換えている。完了確定・LINE送信済みにする操作は図のとおりスワイプ(`swipe.js`)で実装(呼ぶ関数は資料どおり) |
 
 ## 4. 実装時に特に注意してほしい点
 

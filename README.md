@@ -23,6 +23,7 @@ public/                 … Hosting で配信するファイル
                                 STEP1=飼い主/日程/送迎(共通)+うさぎカード(名前/初回/ケア項目/備考。プチブラシは回数カウンター)
                                 STEP2=滞在期間グリッド。ケアは既定日に全部セット済み→「＋」で日を足し、内訳表で
                                       通常項目はラジオで日を移動(元の日は自動で外れる)、プチブラシは日ごとに回数。ランはセルで増減
+  registerGridView.js         … register.js STEP2のグリッドHTML生成(scheduleTableHTML / careBreakdownHTML)
   history.html / history.js   … 過去の記録参照(宿泊終了したうさぎだけを月ごとに全体一覧と同じグリッドで。閲覧専用)
   admin.html / admin.js       … 設定(ケア項目・定休日・繁忙期。変更は自動保存。開くとき設定パスワードを要求。店舗名バッジを表示)
 
@@ -38,7 +39,7 @@ public/                 … Hosting で配信するファイル
   scheduleGrid.js    … 純粋ロジック:登録STEP2の作業データ ↔ Firestore形式(テスト対象)
   db.js              … データアクセス層:Firestoreの読み書き
   esc.js / swipe.js / toast.js … 小さな共通部品(HTMLエスケープ / スワイプ完了 / 失敗トースト)
-  icons.js / icons.svg … アイコン(SVGスプライトと、JS生成部分用の icon() ヘルパー)
+  icons.js / icons/*.svg … アイコン(個別のSVGファイルをCSSのmaskで表示。JS生成部分用の icon() ヘルパー)
   style.css          … 全画面共通デザイン
 
 firebase.json / firestore.rules / firestore.indexes.json / .firebaserc
@@ -60,7 +61,7 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
    （`firebase-config.js` は `.gitignore` 対象。実際の接続情報をgit管理に入れないため）。
    ウェブアプリを追加し、表示された設定値を `public/firebase-config.js` の `firebaseConfig` に貼り付け。
    同ファイルの **`STAFF_EMAIL`** を手順2で作ったアドレスに変更。
-   `.firebaserc` の `TODO_PROJECT_ID` も実際のプロジェクトIDに変更。
+   `.firebaserc` の `projects.default` も実際のプロジェクトIDに変更。
 5. Firebase CLI を導入して初回デプロイ:
    ```
    npm install -g firebase-tools
@@ -105,7 +106,8 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
 
 - **認証**：スタッフは Firebase Authentication の**共有アカウント1つ**（メール/パスワード）でログインする。
   `login.html` はパスワードだけを入力し、内部で `STAFF_EMAIL` 固定でサインインする。
-  Firestore ルールは「メール/パスワードでログイン済みか」(`sign_in_provider == 'password'`) だけを見る。
+  Firestore ルールはアクセス可否を「メール/パスワードでログイン済みか」(`sign_in_provider == 'password'`) だけで判定する
+  （書き込み時は主要フィールドの型を軽く検証する程度で、詳しいスキーマ検証はしていない）。
   → デプロイURLを知っているだけでは読み書きできない（以前の匿名認証では誰でも通っていた）。
 - **設定パスワード**：`config/common.managerPassword`。ログイン済みスタッフのみ読める。
   設定画面(`admin.html`)を開くときの2段階目の確認に使う（クライアント側で照合）。
@@ -175,7 +177,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 | 定休日 | 「定休日リスト」 | `{ weekdays, dates }` | 毎週の定休曜日と臨時休業日の両方を扱えるように |
 | うさぎ一覧の取得 | 資料は `subscribeRabbit`(単体)のみ記載 | 全体一覧=`subscribeActiveRabbits`(hiddenAt==null)／ケア・ラン=`subscribeAllRabbits`(終了ぶんも)／過去の記録=`getAllRabbits`→`isStayEnded`で絞る | 宿泊終了しても、その滞在期間の日付にはケア/ラン担当で記録が残って見えるように |
 | 「宿泊終了」の判定 | 資料は明記なし | `schedule.isStayEnded(r)`＝`hiddenAt`あり **or** お迎え日<今日（当日は除く） | 「宿泊終了」ボタンの押し忘れを日付で自動カバー。`hiddenAt` は別途 TTL(6ヶ月後削除)の起点なのでボタン運用は残す |
-| LINE送信・項目削除の操作 | スワイプ | ボタン(＋タッチ環境向けにスワイプは今後追加可) | まず確実に動く操作で機能を満たすことを優先。呼ぶ関数(`markCareLineSent` 等)は資料どおり |
+| スワイプ操作の範囲 | 全操作をスワイプ | **完了確定・LINE送信済みにする操作だけ**スワイプ(`swipe.js`)。項目の追加/削除・回数の増減・チェックは誤操作防止のためボタン/チェックボックス | 取り消しにくい操作(送信済みにする等)だけをスワイプにし、日常的に触る操作は確実な形にするため。呼ぶ関数(`markCareLineSent` 等)は資料どおり |
 | `getOrCreateDailyRecord` の引数 | `(rabbitId, date)` | `(storeId, rabbit, date, holidays, busyPeriods, countableIds)` | 購読中の文書と店舗設定を渡して読み取り回数を減らすため |
 | `overview` での記録生成 | 資料では一覧でも `getOrCreateDailyRecord` | 一覧では**生成せず参照のみ** | 未来日の記録を先に作らないため。生成はケア/ラン画面で当日ぶんのみ |
 | `careTotals` / `runTotal` | 宿泊全体の累計を文書に持つ | **廃止**（2026-09） | どの画面も読んでおらず、チェック操作ごとに余計な書き込みが増える＋当日記録と非アトミックにズレる原因になっていた。累計が要るときは `dailyRecords` から集計する |
@@ -227,9 +229,9 @@ npm run check     # lint + format:check + test（CI と同じ）
 - 各HTMLの `<head>` に `preconnect`（gstatic / firestore / securetoken）と `modulepreload`（vendor.js）
 - **App Check（reCAPTCHA Enterprise）はアイドル時に遅延初期化**（`firebase-config.js`）。
   reCAPTCHA スクリプトの読み込みが重く、毎ページの描画を待たせていたのを外した。
-- `firebase.json`：HTML は `no-cache`（毎回最新）、**JS/CSS/SVG は `max-age=3600`（1時間キャッシュ）**。
+- `firebase.json`：HTML は `no-cache`（毎回最新）、**JS/CSS は `max-age=300`（5分キャッシュ）、SVG は `max-age=86400`（1日キャッシュ）**。
   作業中の画面移動でファイルを取り直さない。
-  - デプロイした変更が端末に届くまで最大1時間（運用開始後はほぼデプロイしない前提）。
+  - デプロイした変更が端末に届くまで最大5分（運用開始後はほぼデプロイしない前提）。
   - **開発中にデプロイした変更をすぐ確認したいときはハード再読み込み**
     （スマホ：サイトのデータを削除／PC：Ctrl+Shift+R）。`firebase serve` やプレビューチャンネルは常に最新。
   - HTML と JS を同時に変えたデプロイの直後だけ、旧JS＋新HTMLで一時的にズレる可能性 → 再読み込みで解消。
