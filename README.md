@@ -23,7 +23,9 @@ public/                 … Hosting で配信するファイル
   setup.html / setup.js       … 初期セットアップ(初回のみ・パスワード等)
   seed-stores.html / seed-stores.js … 店舗(store_1 本店 / store_2 豊中店)の初期登録(初回のみ)
 
-  firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集)
+  firebase-config.js … Firebase接続設定 + STAFF_EMAIL + App Check(★要編集。gitignore対象。
+                        firebase-config.example.js をコピーして作る)
+  firebase-config.example.js … 上記のテンプレート(実際の値はダミー。こちらだけgit管理)
   vendor.js          … Firebase SDK の唯一の入口(バージョン更新はこのファイルだけ)
   auth.js            … 共通ロジック層:スタッフ共有アカウントのログイン + 設定パスワード照合
   schedule.js        … 共通ロジック層:日付計算・その日の状態(careOnDate / runOnDate)
@@ -51,7 +53,9 @@ Firebase SDK の import はすべて `vendor.js` 経由（gstatic の URL を各
    続いて **Users** →「ユーザーを追加」で**スタッフ共有アカウントを1つ**作成する
    （例：`staff@あなたのドメイン`。パスワードがスタッフ全員のログインパスワードになる）。
 3. **Firestore Database** を作成(本番モード)。
-4. ウェブアプリを追加し、表示された設定値を `public/firebase-config.js` の `firebaseConfig` に貼り付け。
+4. `cp public/firebase-config.example.js public/firebase-config.js` でテンプレートをコピー
+   （`firebase-config.js` は `.gitignore` 対象。実際の接続情報をgit管理に入れないため）。
+   ウェブアプリを追加し、表示された設定値を `public/firebase-config.js` の `firebaseConfig` に貼り付け。
    同ファイルの **`STAFF_EMAIL`** を手順2で作ったアドレスに変更。
    `.firebaserc` の `TODO_PROJECT_ID` も実際のプロジェクトIDに変更。
 5. Firebase CLI を導入して初回デプロイ:

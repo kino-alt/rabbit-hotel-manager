@@ -1,6 +1,10 @@
-// Firebaseへの接続設定（共通ファイル）
+// Firebaseへの接続設定（テンプレート）
 //
-// ↓ Firebaseコンソール →「プロジェクトの設定」→「マイアプリ（ウェブ）」で取得した値に置き換えてください。
+// 使い方：このファイルを firebase-config.js としてコピーし、下記の値を
+// Firebaseコンソール →「プロジェクトの設定」→「マイアプリ（ウェブ）」で取得した値に置き換える。
+//   cp public/firebase-config.example.js public/firebase-config.js
+// firebase-config.js は .gitignore 済みなので、書き換えてもgit管理には入らない。
+//
 // firebaseConfig 自体はブラウザに公開されても問題ありません。実際のアクセス制御は
 // セキュリティルール（本物のメール/パスワードでログイン済みか）と App Check で行います。
 
@@ -16,13 +20,13 @@ import {
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBx0Du1FI_K6g9Hkbu98qQJmf5I1hCwVdg",
-  authDomain: "rabbit-hotel-manager.firebaseapp.com",
-  projectId: "rabbit-hotel-manager",
-  storageBucket: "rabbit-hotel-manager.firebasestorage.app",
-  messagingSenderId: "44112581380",
-  appId: "1:44112581380:web:9e49fe5eb42496a37a7651",
-  measurementId: "G-FGMER1CDGG",
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID",
 };
 
 // スタッフ共有アカウント。Firebase Authentication（メール/パスワード）に
@@ -34,7 +38,7 @@ export const STAFF_EMAIL = "staff@example.com";
 // App Check（reCAPTCHA Enterprise・スコアベースのサイトキー）。
 // 空文字なら App Check は初期化しない（未設定でも動く）。
 // 設定手順は README「セキュリティ」節を参照。
-const RECAPTCHA_SITE_KEY = "6LckYq8tAAAAAKNFXpIRsAqtyWK96xLaIaO8LKfz";
+const RECAPTCHA_SITE_KEY = "";
 
 // 店舗一覧（Firestore の stores/{id} と対応）。
 // 店舗を増やすときはこの配列に追加し、seed-stores.html で初期値を書き込む。

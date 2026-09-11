@@ -20,3 +20,6 @@ Thumbs.db
 # 一時ファイル
 *.tmp
 scratchpad/
+
+# 実際の接続情報（テンプレートは firebase-config.example.js）
+public/firebase-config.js
