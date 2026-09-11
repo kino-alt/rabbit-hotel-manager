@@ -1,57 +1,6 @@
-# 関数構成・呼び出し関係(最終設計・改訂4)
+# 関数構成・呼び出し関係
 
-> 初期実装時点の資料。改訂4（2026-09）の要点を以下に反映済み。詳細な現状は `README.md`。
-
-## 改訂4(2026-09・運用開始後の見直し)
-
-- **認証**：匿名認証を廃止。`auth.login()` は `signInWithEmailAndPassword(STAFF_EMAIL, 入力パスワード)`。
-  `signInAnonymously()` は削除。setup/seed は `requireLogin()`（先にログインしてから開く）。
-  role の概念は縮小（ログインは常に "staff"。設定画面は `verifyManagerPassword()` が別ゲート）。
-  `auth.changeStaffPassword()` を追加（設定画面からログインパスワード変更）。
-- **廃止**：`db.bumpTotals()` と `careTotals` / `runTotal`（どの画面も未参照・非アトミック）。
-- **切り出し（純粋モジュール、テスト対象）**：`scheduleMerge.js`（3-wayマージ）、`careReconcile.js`
-  （`reconcileCare` / `computeAllDone`）、`esc.js`、`swipe.js`、`icons.js`、`toast.js`、`vendor.js`（Firebase SDK の唯一の入口）。
-- `register.js`：登録時に `staffName`（担当スタッフ名）を入力・保存。
-
-## 改訂内容
-
-### 改訂2まで
-
-- `dailyRecords`をサブコレクションからフィールドに変更したことに伴い、`db.js`の関数を更新(`getDailyRecordsRange()`を削除、`subscribeDailyRecord()`の説明を修正)
-- 匿名認証を追加したことに伴い、新しいファイル`auth.js`を追加
-
-### 改訂3(実装に合わせて反映)
-
-- `dailyRecord.js`の各関数の引数を実装に合わせて修正
-  (`(rabbitId, date, ...)` → `(storeId, rabbit, date, ...)`。購読中のうさぎ文書と店舗設定を渡し、Firestoreの読み取り回数を減らすため)
-- `db.js`に実装済みの関数を追加
-  (`getRabbit` / `subscribeActiveRabbits` / `getAllRabbits` / `bumpTotals` / `deleteCareItemForDate` /
-   `writeSchedules` / `unhideRabbit` / `getStore` / `subscribeStore` / `getConfig` / `initConfig` / `initStore`)
-- `auth.js`に`getRole` / `isManager` / `requireAuth` / `logout`を追加。`login()`は role(manager / staff)を返す
-- ケア/ラン/一覧画面は`subscribeRabbit`(単体)ではなく`subscribeActiveRabbits`(一覧購読)を使う
-- `getOrCreateDailyRecord()`の呼び出し元は care.js / run.js のみ(overview.js は記録を生成せず参照のみ)
-- `removeCareItemForToday()`は即時削除(「一定時間保持」はしない)
-- 初期セットアップ画面`setup.html` / `setup.js`、担当選択の`main.js`を追加
-
-### 改訂4(連携・保守性の改修 ― 詳細は `data_sync.md`)
-
-- **店舗設定の一括取得・購読**:`getStore()`を3回呼んでいた箇所を`getStoreConfig()`(1回)に統一。
-  ケア/ラン/全体一覧は`subscribeStoreConfig()`で購読し、設定画面での変更が即反映される。
-  `getHolidays()` / `getBusyPeriods()` / `subscribeStore()`は廃止(役割は上記2つへ)。
-- **予定の書き込みを日単位・アトミックに**:マップ丸ごと置換の`writeSchedules()`を廃止。
-  - `patchScheduleDay()` … ケア担当「項目を編集」用。`arrayUnion`/`arrayRemove`で1項目ずつ
-  - `writeSchedulesMerge(base, next)` … 登録画面の保存用。`runTransaction`内で
-    「利用者が変えた日 ∧ まだサーバがその値でない日」だけを field path で書く3-wayマージ
-- **判定ロジックの一本化**:「その日のケア/ラン状態」の判定を`schedule.js`の
-  `careOnDate()` / `runOnDate()`に集約。overview / care / run はこれだけを見る。
-- **グリッド描画の共用**:`overviewView.js` に `scheduleGridHTML(rabbits, dates, ctx, opts)` を
-  切り出し、全体一覧（本日から7日）と過去の記録（history.js。月ごと・宿泊終了ぶんも表示）で共用。
-- **登録画面(register.js)**:`getRabbit()`(1回)→`subscribeRabbit()`(購読)。
-  編集中に他端末が更新したら、未編集ならグリッドを静かに作り直し、編集中なら通知＋「作り直す」ボタン。
-  保存後は影響した日の既存`dailyRecords`を`reconcileDailyRecord()`で予定に合わせる。
-- **STEP2 グリッドの変換ロジック**を`scheduleGrid.js`(DOM非依存)へ分離
-  (`buildEntry` / `entryToSchedules` / `careScheduleShape` ほか)。
-- `db.getRabbit()`は現在どこからも呼ばれない(単発取得プリミティブとして残置)。
+> 詳しいセットアップ・セキュリティ・Firestoreデータ構造は `README.md` を参照。
 
 ## 層の役割
 

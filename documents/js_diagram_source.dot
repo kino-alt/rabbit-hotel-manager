@@ -1,5 +1,5 @@
 digraph G {
-  // 改訂4(2026-09):実装(function_relationships.md)に合わせて関数一覧・依存関係を更新
+  // 実装(function_relationships.md)に合わせて関数一覧・依存関係を記載
   rankdir=TB;
   bgcolor="white";
   fontname="Noto Sans CJK JP";

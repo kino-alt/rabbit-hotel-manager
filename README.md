@@ -193,7 +193,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
 - **登録画面**：`subscribeRabbit()` で最新を保持。保存後は影響した日の既存 `dailyRecords` を `reconcileDailyRecord()` で予定に合わせる。
 - **残る割り切り**：同じうさぎ・同じ日を2人が同時に別内容へ編集した場合は最後の書き込みが勝つ（セマンティックな衝突のためトランザクションでも解決しない）。
 
-詳細は `documents/function_relationships.md` の「改訂4」と「同時編集の扱い」。
+詳細は `documents/function_relationships.md` を参照。
 
 ## 開発（テスト）
 

@@ -40,8 +40,7 @@ setup.html / setup.js(初期セットアップ。初回のみ)
 	style.css(全画面共通のデザイン)
 ```
 
-> 実装は改訂4。関数の引数・`db.js` の関数一覧・同時編集の扱いなど実装との差分は
-> `function_relationships.md` の「改訂4」「同時編集の扱い」にまとめている。
+> 関数の引数・`db.js` の関数一覧・同時編集の扱いは `function_relationships.md` にまとめている。
 > プロジェクト直下の `README.md` の「データ層と同時アクセス対策」も参照。
 
 ## 3. 関連ドキュメント
@@ -51,7 +50,7 @@ setup.html / setup.js(初期セットアップ。初回のみ)
 | `firestore_data_structure_final.md` | Firestoreのデータ構造(コレクション・フィールド設計) |
 | `function_relationships.md` | ファイルごとの関数一覧・役割・呼び出し関係 |
 | `feature_to_function_mapping.md` | 機能ごとに、どの関数がどの順番で動くか |
-| `js_functions_diagram.mmd` / `js_diagram_source.dot` | 上記を1枚の図にまとめたソース(Mermaid記法 / Graphviz記法)。改訂4に対応済み。関数の詳細・引数は `function_relationships.md` を正とする |
+| `js_functions_diagram.mmd` / `js_diagram_source.dot` | 上記を1枚の図にまとめたソース(Mermaid記法 / Graphviz記法)。関数の詳細・引数は `function_relationships.md` を正とする |
 | `js_functions_diagram.png` | `js_functions_diagram.mmd` から書き出した画像。更新時は `npx @mermaid-js/mermaid-cli -i js_functions_diagram.mmd -o js_functions_diagram.png -b white` で再生成 |
 | `care_screen_wireframe.svg` / `run_screen_wireframe.svg` | 画面レイアウトの参考。**操作方式は実装と相違あり**:図中の「横にスワイプ」「←」は、実装では「項目を編集」トグル＋「削除」ボタン／「LINE送信」ボタンに置き換えている(まず確実に動く操作を優先。呼ぶ関数は資料どおり) |
 
