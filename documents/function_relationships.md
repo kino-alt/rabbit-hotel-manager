@@ -81,14 +81,14 @@ DOMに触れない。STEP2グリッドの作業データ(`entry`)と Firestore�
 | `patchScheduleDay(storeId, rabbitId, ops)` | 予定を1項目/1日単位で更新。`addCareItem`/`removeCareItem`は`arrayUnion`/`arrayRemove`、`setCareCount`/`setRunCount`は field path | dailyRecord.js(`addCareToday`ほか) |
 | `writeSchedulesMerge(storeId, rabbitId, base, next)` | 登録画面の保存。`runTransaction`内で最新値を読み、「利用者が変えた ∧ サーバがまだその値でない」日だけを書く3-wayマージ。戻り値は書き込んだ field path 配列 | register.js(`onSave`) |
 | `hideRabbit` / `unhideRabbit` | `hiddenAt` / `expireAt`(Firestore TTL起点)の設定・解除 | register.js / (復旧用) |
-| `getStoreConfig(storeId)` | 店舗設定を**1回の読み取り**で `{ careItemsMaster, holidays, busyPeriods }` にして返す | register.js / admin.js |
+| `getStoreConfig(storeId)` | 店舗設定を**1回の読み取り**で `{ careItemsMaster, holidays, busyPeriods }` にして返す | register.js / admin.js / history.js |
 | `subscribeStoreConfig(storeId, callback)` | 同じ形をリアルタイム購読。設定画面の変更が即反映 | care.js / run.js / overview.js |
-| `getCareItemsMaster(storeId)` | ケア項目マスタを`order`順で取得 | history.js |
 | `updateCareItemsMaster` / `updateHolidays` / `updateBusyPeriods` | 店舗設定の各フィールドを上書き保存 | admin.js |
 
 **廃止した関数**:
 - `getDailyRecordsRange()` ― `dailyRecords`のフィールド化で不要
 - `writeSchedules()` ― マップ丸ごと置換をやめ、`patchScheduleDay()` / `writeSchedulesMerge()` に分割
+- `getCareItemsMaster(storeId)` ― history.js が `getStoreConfig()` に統合されたため呼び出し元が無くなり削除(2026-09)
 - `getHolidays()` / `getBusyPeriods()` / `subscribeStore()` ― `getStoreConfig()` / `subscribeStoreConfig()` に統合
 
 ---
