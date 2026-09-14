@@ -214,12 +214,6 @@ export function subscribeStoreConfig(storeId, callback) {
   });
 }
 
-export async function getCareItemsMaster(storeId) {
-  const s = await getStore(storeId);
-  const items = (s && s.careItemsMaster) || [];
-  return [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-}
-
 export async function updateCareItemsMaster(storeId, items) {
   await setDoc(storeRef(storeId), { careItemsMaster: items }, { merge: true });
 }
