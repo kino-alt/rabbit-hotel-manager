@@ -1,14 +1,6 @@
 // 当日記録のケア（items / counts）を、その日の予定（careSchedule / careCounts）へ
 // 合わせる純粋ロジック。dailyRecord.js から使う（Firestore に依存しない＝テスト可能）。
 
-// items: { id: bool }（通常項目） / counts: { id: {need,done} }（回数式項目）
-export function computeAllDone(items, counts) {
-  const itemVals = Object.values(items || {});
-  const countVals = Object.values(counts || {});
-  if (itemVals.length === 0 && countVals.length === 0) return true;
-  return itemVals.every(Boolean) && countVals.every((c) => (c.done || 0) >= (c.need || 0));
-}
-
 // 記録のケアを予定へ合わせる。
 //   ・予定に増えた項目 → 追加（done=false）／回数式は need を追随
 //   ・removeUnfulfilled=true のとき、予定から外れた未実施項目 → 削除
