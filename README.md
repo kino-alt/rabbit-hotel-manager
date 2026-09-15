@@ -233,7 +233,7 @@ stores/{storeId}                     (storeId は firebase-config.js の STORES�
     dailyRecords:  { "YYYY-MM-DD": {
         care:  { items: { itemId: bool },              (通常項目)
                  counts: { itemId: { need, done } },   (回数式項目)
-                 allDone: bool, lineSent: bool },
+                 done: bool, lineSent: bool },
         run:   { needed: n, doneCount: n, sentCount: n },
         photo: { needed: bool, taken: bool, sent: bool }
     } }

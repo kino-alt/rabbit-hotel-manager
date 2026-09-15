@@ -1,23 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { computeAllDone, reconcileCare } from "../public/careReconcile.js";
-
-test("computeAllDone: 空は完了扱い", () => {
-  assert.equal(computeAllDone({}, {}), true);
-  assert.equal(computeAllDone(null, null), true);
-});
-
-test("computeAllDone: 通常項目は全 true で完了", () => {
-  assert.equal(computeAllDone({ a: true, b: true }, {}), true);
-  assert.equal(computeAllDone({ a: true, b: false }, {}), false);
-});
-
-test("computeAllDone: 回数式は done>=need で完了", () => {
-  assert.equal(computeAllDone({}, { x: { need: 2, done: 2 } }), true);
-  assert.equal(computeAllDone({}, { x: { need: 2, done: 1 } }), false);
-  assert.equal(computeAllDone({ a: true }, { x: { need: 1, done: 1 } }), true);
-});
+import { reconcileCare } from "../public/careReconcile.js";
 
 test("reconcileCare: 予定に増えた通常項目を done=false で追加", () => {
   const r = reconcileCare({ items: {}, counts: {} }, ["a"], {}, new Set(), false);
