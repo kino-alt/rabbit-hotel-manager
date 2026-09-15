@@ -28,8 +28,7 @@ export async function login(inputPassword) {
     }
     throw err;
   }
-  localStorage.setItem("role", "staff");
-  return { ok: true, role: "staff" };
+  return { ok: true };
 }
 
 // 設定画面を開くための「設定パスワード」を照合する（ログインとは別）。
@@ -56,14 +55,6 @@ export async function changeStaffPassword(currentPassword, newPassword) {
   await updatePassword(user, newPassword);
 }
 
-export function getRole() {
-  return localStorage.getItem("role") || "staff";
-}
-
-export function isManager() {
-  return getRole() === "manager";
-}
-
 // 各画面の先頭で呼ぶ。メール/パスワードでログイン済みでなければ login.html へ飛ばす。
 export function requireAuth(onReady) {
   onAuthStateChanged(auth, (user) => {
@@ -76,7 +67,6 @@ export function requireAuth(onReady) {
 }
 
 export async function logout() {
-  localStorage.removeItem("role");
   await signOut(auth);
   location.replace("login.html");
 }
